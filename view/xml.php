@@ -2,7 +2,7 @@
 
 class xml extends core {
 	
-	private function head() {
+	protected function head() {
 
 		header( 'Content-Type: text/xml; charset=utf-8' );
 	}

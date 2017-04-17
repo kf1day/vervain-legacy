@@ -8,6 +8,11 @@ class pgsql {
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
 
+		$this->start( $host, $port, $base, $user, $pass );
+	}
+
+	final protected function start( $host, $port, $base, $user, $pass ) {
+ 
 		$s = "options='--client_encoding=UTF8'";
 		if ( $host != '' ) $s .= ' host='.$host;
 		if ( $port != '' ) $s .= ' port='.$port;

@@ -2,12 +2,16 @@
 
 if ( PHP_SAPI === 'cli' ) exit( 'This file should be called by web server'.PHP_EOL );
 
+if ( isset( $_SERVER['DEBUG'] ) ) {
+	ini_set( 'display_errors', 1 );
+	error_reporting( E_ALL );
+}
+
 define( 'APP_ROOT', dirname( __FILE__ ) );
 
-require APP_ROOT.'/core/ctl.php';
-require APP_ROOT.'/core/model.php';
-require APP_ROOT.'/core/view.php';
+require APP_ROOT.'/core/basex.php';
+require APP_ROOT.'/core/common.php';
 require APP_ROOT.'/core/http.php';
-require APP_ROOT.'/core/map.php';
+require APP_ROOT.'/core/mvc.php';
 
-http::request();
+new http();
