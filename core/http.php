@@ -2,26 +2,33 @@
 
 class http {
 	
+	private $path = '';
+	private $control = 'index';
+	private $args = [];
+	
 	public function __construct() {
 		define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
-		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) exit( 'Sitemap not found' );
 		
-		$map = new map();
-		$args = [];
-		$control = $this->follow( $map, $args );
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
-			$tmp = new ReflectionClass( '\\control\\'.$control );
-			$tmp->getMethod( 'run' )->invokeArgs( $tmp->newInstance( $map ), $args );
+			$map = $this->follow();
+			$tmp = new ReflectionClass( '\\control\\'.$this->control );
+			$tmp->getMethod( 'run' )->invokeArgs( $tmp->newInstance( $map ), $this->args );
 		} catch( HttpRedirectException $e ) {
-			$this->redirect( $e->getMessage() );
+			if ( $e->url ) {
+				$this->redirect( $e->url );
+			} else {
+				$this->redirect( $path );
+			}
 		} catch( Exception $e ) {
-			var_dump( $e );
+			$this->notfound( $e->GetMessage() );
 			exit;
 		}
 	}
 
-	private function follow( &$map, &$args ) {
+	private function follow() {
+		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
+		$map = new map();
 		$tmp = require APP_SITE.'/sitemap.php';
 		foreach( $tmp as $k => $v ) {
 			$map->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2], 'acl' => $v[3] ] );
@@ -52,31 +59,33 @@ class http {
 			if ( $flag ) break;
 		}
 
-		if ( $tmp ) $args[] = $tmp;
+		if ( $tmp ) $this->args[] = $tmp;
 		while ( $tmp = next( $stack ) ) $args[] = $tmp;
 
 		if ( $node['ctl'] === null ) {
 			if ( ! $flag ) {
 				while( ( $node['ctl'] === null ) && ( $node = $map->firstchild( $id ) ) ) $nice .= $node['path'].'/';
 				if ( $node['ctl'] ) {
-					$this->redirect( $nice );
+					throw new HttpRedirectException( $nice );
 				}
 			}
-			$this->notfound();
+			throw new HttpNotFoundException();
 		} else {
 			if ( ! $flag && ( $_SERVER['REQUEST_URI'] != $nice ) ) {
-				$this->redirect( $nice );
+				throw new HttpRedirectException( $nice );
 			}
 		}
-		return $node['ctl'];
+		$this->control = $node['ctl'];
+		$this->path =  $nice;
+		return $map;
 	}
 
-	public function notfound( $e = null ) {
+	private function notfound( $e = null ) {
 		http_response_code( 404 );
 		exit( $e );
 	}
 
-	public function redirect( $a ) {
+	private function redirect( $a ) {
 		header( 'Location: '.( $_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://' ).$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
 		exit;
 	}
