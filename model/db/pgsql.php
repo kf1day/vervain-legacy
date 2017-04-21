@@ -8,11 +8,6 @@ class pgsql {
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
 
-		$this->start( $host, $port, $base, $user, $pass );
-	}
-
-	final protected function start( $host, $port, $base, $user, $pass ) {
- 
 		$s = "options='--client_encoding=UTF8'";
 		if ( $host != '' ) $s .= ' host='.$host;
 		if ( $port != '' ) $s .= ' port='.$port;
@@ -36,7 +31,7 @@ class pgsql {
 		$q = 'SELECT "'.$fields.'" FROM "'.$table.'"';
 		if ( is_array( $filter ) && count( $filter ) > 0 ) {
 			$t = [];
-			foreach( $filter as $k => $v ) $t[] = '"'.$k.'" = "'.$v.'"';
+			foreach( $filter as $k => $v ) $t[] = '"'.$k.'" = '.$v.'';
 			$q .= ' WHERE '.implode( ' AND ', $t );
 		}
 		if ( ( is_array( $sort ) && count( $sort ) > 0 ) || ( $sort && $sort = [ $sort ] ) ) {
@@ -50,7 +45,7 @@ class pgsql {
 			$q .= ' ORDER BY '.implode( ', ', $t );
 		}
 		$res = @pg_query( $q.';' );
-		if ( ! $res ) exit( 'Query error: '.$q );
+		if ( ! $res ) exit( 'Query error: '.$q.';' );
 		while ( $r = pg_fetch_row( $res ) ) {
 			$fff[] = ( $mt ) ? $r : $r[0];
 		}
