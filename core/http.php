@@ -18,7 +18,7 @@ class http {
 			if ( $e->url ) {
 				$this->redirect( $e->url );
 			} else {
-				$this->redirect( $path );
+				$this->redirect( $this->path );
 			}
 		} catch( Exception $e ) {
 			$this->notfound( $e->GetMessage() );
@@ -86,7 +86,10 @@ class http {
 	}
 
 	private function redirect( $a ) {
-		header( 'Location: '.( $_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://' ).$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
+		$scheme = 'http';
+		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
+		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
+		header( 'Location: '.$scheme.'//'.$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
 		exit;
 	}
 	
