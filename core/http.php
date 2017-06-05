@@ -89,7 +89,7 @@ class http {
 		$scheme = 'http';
 		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
 		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
-		header( 'Location: '.$scheme.'//'.$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
+		header( 'Location: '.$scheme.'://'.$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
 		exit;
 	}
 	
