@@ -1,53 +1,56 @@
 <?php namespace model\db;
 
-class pgsql {
+class mysql {
 
-	protected $pt = null;
+	private $pt = null;
 	protected $rx = null;
+
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
 
-		$s = "options='--client_encoding=UTF8'";
-		if ( $host != '' ) $s .= ' host='.$host;
-		if ( $port != '' ) $s .= ' port='.$port;
-		if ( $base != '' ) $s .= ' dbname='.$base;
-		if ( $user != '' ) $s .= ' user='.$user;
-		if ( $pass != '' ) $s .= ' password='.$pass;
-		$this->pt = @pg_connect( $s );
+		if ( $host && $port ) {
+			$host .= ':'.$port;
+		} else {
+			$host = '';
+		}
+		
+		$this->pt = new \mysqli( $host, $user, $pass, $base );
 
 		if ( ! $this->pt ) {
 			throw new \Exception( 'DBA connection failed' );
+		} else {
+			$this->pt->query( 'SET NAMES UTF8' );
 		}
 	}
 
 	public function get( $table, $fields, $filter = false, $sort = false ) {
 		if ( is_array( $fields ) ) {
-			$fields = implode( '", "', $fields );
+			$fields = implode( '`, `', $fields );
 		}
-		$q = 'SELECT "'.$fields.'" FROM "'.$table.'"';
+		$q = 'SELECT `'.$fields.'` FROM `'.$table.'`';
 		if ( is_array( $filter ) && count( $filter ) > 0 ) {
 			$t = [];
-			foreach( $filter as $k => $v ) $t[] = '"'.$k.'" = '.$v.'';
+			foreach( $filter as $k => $v ) $t[] = '`'.$k.'` = "'.$v.'"';
 			$q .= ' WHERE '.implode( ' AND ', $t );
 		}
 		if ( ( is_array( $sort ) && count( $sort ) > 0 ) || ( $sort && $sort = [ $sort ] ) ) {
 			$t = [];
 			foreach( $sort as $v ) {
-				$v = '"'.$v.'"';
-				$v = preg_replace( '/^"\+(.*)"$/', '"$1" ASC', $v );
-				$v = preg_replace( '/^"\-(.*)"$/', '"$1" DESC', $v );
+				$v = '`'.$v.'`';
+				$v = preg_replace( '/^`\+(.*)`$/', '`$1` ASC', $v );
+				$v = preg_replace( '/^`\-(.*)`$/', '`$1` DESC', $v );
 				$t[] = $v;
 			}
 			$q .= ' ORDER BY '.implode( ', ', $t );
 		}
-		$this->rx = @pg_query( $this->pt, $q.';' );
+		$this->rx = $this->pt->query( $q.';' );
 		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
-		return pg_num_rows( $this->rx );
+		return $this->rx->num_rows;
 	}
 	
 	public function fetch() {
 		if ( $this->rx ) {
-			return pg_fetch_row( $this->rx );
+			return $this->rx->fetch_row();
 		} else {
 			return false;
 		}
@@ -56,7 +59,7 @@ class pgsql {
 	public function fetch_all() {
 		$fff = [];
 		if ( $this->rx ) {
-			while( $tmp = pg_fetch_row( $this->rx ) ) {
+			while( $tmp = $this->rx->fetch_row() ) {
 				$fff[] = $tmp;
 			}
 		} else {

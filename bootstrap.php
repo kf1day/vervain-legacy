@@ -9,7 +9,6 @@ if ( isset( $_SERVER['DEBUG'] ) ) {
 
 define( 'APP_ROOT', dirname( __FILE__ ) );
 
-require APP_ROOT.'/core/basex.php';
 require APP_ROOT.'/core/common.php';
 require APP_ROOT.'/core/http.php';
 require APP_ROOT.'/core/mvc.php';
