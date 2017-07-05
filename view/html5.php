@@ -2,9 +2,9 @@
 
 class html5 extends core {
 
-	protected function head() {
-
+	public function render( $template, $data = null ) {
 		header( 'Content-Type: text/html; charset=utf-8' );
 		echo '<!DOCTYPE html>';
+		parent::render( $template, $data );
 	}
 }

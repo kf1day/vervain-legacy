@@ -67,6 +67,12 @@ class mysql {
 		}
 		return $fff;
 	}
+	
+	public function raw( $q ) {
+		$this->rx = $this->pt->query( $q.';' );
+		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
+		return $this->rx->num_rows ?? 0;
+	}
 
 	public function put( $table, $fields ) {
 		if ( !is_array( $fields ) || count( $fields ) == 0 ) return false;

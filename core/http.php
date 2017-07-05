@@ -1,6 +1,7 @@
 <?php
 
 class HttpRedirectException extends Exception { public $url = null; public function __construct( $url = null ) { $this->url = $url; } }
+class HttpForbiddenException extends Exception {}
 class HttpNotFoundException extends Exception {}
 
 class http {
@@ -23,9 +24,10 @@ class http {
 			} else {
 				$this->redirect( $this->path );
 			}
+		} catch( HttpForbiddenException $e ) {
+			$this->forbidden();
 		} catch( Exception $e ) {
 			$this->notfound( $e->GetMessage() );
-			exit;
 		}
 	}
 
@@ -83,10 +85,16 @@ class http {
 		return $map;
 	}
 
+	private function forbidden( $e = null ) {
+		http_response_code( 403 );
+		exit( $e );
+	}
+	
 	private function notfound( $e = null ) {
 		http_response_code( 404 );
 		exit( $e );
 	}
+	
 
 	private function redirect( $a ) {
 		$scheme = 'http';

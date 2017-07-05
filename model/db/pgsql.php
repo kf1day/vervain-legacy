@@ -13,7 +13,7 @@ class pgsql {
 		if ( $base != '' ) $s .= ' dbname='.$base;
 		if ( $user != '' ) $s .= ' user='.$user;
 		if ( $pass != '' ) $s .= ' password='.$pass;
-		$this->pt = @pg_connect( $s );
+		$this->pt = @pg_pconnect( $s );
 
 		if ( ! $this->pt ) {
 			throw new \Exception( 'DBA connection failed' );
