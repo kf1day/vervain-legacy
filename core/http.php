@@ -1,9 +1,5 @@
 <?php
 
-class HttpRedirectException extends Exception { public $url = null; public function __construct( $url = null ) { $this->url = $url; } }
-class HttpForbiddenException extends Exception {}
-class HttpNotFoundException extends Exception {}
-
 class http {
 	
 	private $path = '';
@@ -19,15 +15,16 @@ class http {
 			$tmp = new ReflectionClass( '\\control\\'.$this->control );
 			$tmp->getMethod( 'run' )->invokeArgs( $tmp->newInstance( $map ), $this->args );
 		} catch( HttpRedirectException $e ) {
-			if ( $e->url ) {
-				$this->redirect( $e->url );
-			} else {
-				$this->redirect( $this->path );
-			}
+			$e->set_root( $this->path );
+			$e->process();
 		} catch( HttpForbiddenException $e ) {
-			$this->forbidden();
+			$e->process();
+		} catch( HttpNotFoundException $e ) {
+			$e->process();
 		} catch( Exception $e ) {
-			$this->notfound( $e->GetMessage() );
+			echo $e->GetMessage();
+			http_responce_code( 500 );
+			exit;
 		}
 	}
 
@@ -36,7 +33,7 @@ class http {
 		$map = new map();
 		$tmp = require APP_SITE.'/sitemap.php';
 		foreach( $tmp as $k => $v ) {
-			$map->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2], 'acl' => $v[3] ] );
+			$map->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
 		}
 		$id = 0;
 		
@@ -85,25 +82,6 @@ class http {
 		return $map;
 	}
 
-	private function forbidden( $e = null ) {
-		http_response_code( 403 );
-		exit( $e );
-	}
-	
-	private function notfound( $e = null ) {
-		http_response_code( 404 );
-		exit( $e );
-	}
-	
-
-	private function redirect( $a ) {
-		$scheme = 'http';
-		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
-		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
-		header( 'Location: '.$scheme.'://'.$_SERVER['HTTP_HOST'].$a, true, 302 ); // absolute path required due to HTTP/1.1
-		exit;
-	}
-	
 	private function loader( $classname ) {
 		$classname = str_replace( '\\', '/', $classname );
 		if ( is_file( APP_SITE.'/'.$classname.'.php' ) ) {
@@ -111,5 +89,37 @@ class http {
 		} elseif ( is_file( APP_ROOT.'/'.$classname.'.php' ) ) {
 			include APP_ROOT.'/'.$classname.'.php';
 		}
+	}
+}
+
+
+class HttpRedirectException extends Exception {
+	private $url = null;
+	
+	public function __construct( $url = null ) {
+		parent::__construct();
+		$this->url = $url;
+	}
+	public function set_root( $root_uri ) {
+		$this->uri = preg_replace( '/^\~/', $root_uri, $this->url );
+	}
+	public function process() {
+		$scheme = 'http';
+		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
+		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
+		header( 'Location: '.$scheme.'://'.$_SERVER['HTTP_HOST'].$this->url, true, 302 ); // absolute path required due to HTTP/1.1
+		exit;
+	}
+}
+
+class HttpForbiddenException extends Exception {
+	public function process() {
+		( new \control\http_status( null ) )->run( 403 );
+	}
+}
+
+class HttpNotFoundException extends Exception {
+	public function process() {
+		( new \control\http_status( null ) )->run( 404 );
 	}
 }

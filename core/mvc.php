@@ -22,5 +22,6 @@ namespace control {
 			$this->map = $map;
 		}
 		abstract public function run();
+		
 	}
 }

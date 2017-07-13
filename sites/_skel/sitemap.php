@@ -5,8 +5,7 @@
 		Parent ( 1: '/' ),
 		Path,
 		Controller: empty assumed folder
-		ACL #todo: *=ALL|<sid>|<dn> ,
-		Title
+		Options
 	]
 */
 

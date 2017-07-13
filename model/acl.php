@@ -35,11 +35,11 @@ class acl extends core {
 		$data = [];
 		$hash = $_COOKIE['HASH'] ?? false;
 		if ( $uid && $hash ) {
-			if ( ( $data = $this->tokens_get_cache( $uid ) )  && $this->keyring( $data['secret'], $hash ) ) { // have cache + cache is valid
+			if ( ( $data = $this->tokens_get_cache( $uid ) ) && $this->keyring( $data['secret'], $hash ) ) { // have cache + cache is valid
 				$this->user = $data['name'];
 				$this->gsec = $data['gsec'];
 				return true; 
-			} elseif( ( $upn = $this->usercode( $uid, 1 ) ) && $data = $this->tokens_get_ldap( $upn ) ) {// search ldap
+			} elseif( ( $upn = $this->usercode( $uid, 1 ) ) && $data = $this->tokens_get_ldap( $upn ) && $this->keyring( $data['secret'], $hash ) ) {// search ldap
 				echo 'fk Up, go LDAP';
 				$this->user = $data['name'];
 				$this->gsec = $data['gsec'];
