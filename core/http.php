@@ -23,7 +23,7 @@ class http {
 			$e->process();
 		} catch( Exception $e ) {
 			echo $e->GetMessage();
-			http_responce_code( 500 );
+			http_response_code( 500 );
 			exit;
 		}
 	}
