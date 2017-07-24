@@ -2,9 +2,9 @@
 
 class xml extends core {
 	
-	public function render( $template, $data = null ) {
+	public function render( $data = null ) {
 
 		header( 'Content-Type: text/xml; charset=utf-8' );
-		parent::render( $template, $data );
+		parent::render( $data );
 	}
 }

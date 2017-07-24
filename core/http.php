@@ -3,23 +3,28 @@
 class http {
 	
 	private $path = '';
-	private $control = 'index';
-	private $args = [];
 	
 	public function __construct() {
 		define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
 		
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
-			$map = $this->follow();
-			$tmp = new ReflectionClass( '\\control\\'.$this->control );
-			$tmp->getMethod( 'run' )->invokeArgs( $tmp->newInstance( $map ), $this->args );
+			list( $map, $action, $args ) = $this->follow();
+			$index = ( count( $args ) > 0 ) ? array_shift( $args ) : 'index';
+			
+//			echo '\\action\\'.$action.'->'.$index.'('.print_r( $args, 1 ).')'; exit;
+			
+			$tmp = new ReflectionClass( '\\action\\'.$action );
+			if ( ! $tmp->isSubclassOf( '\\action\\core' ) ) {
+				throw new Exception( 'Class in not an ACTION' );
+			} elseif( ! $tmp->hasMethod( $index ) ) {
+				throw new \HttpNotFoundException( 'Method "'.$index.'" not found!');
+			}
+			$tmp->getMethod( $index )->invokeArgs( $tmp->newInstance( $map, $this->path ), $args );
 		} catch( HttpRedirectException $e ) {
 			$e->set_root( $this->path );
 			$e->process();
-		} catch( HttpForbiddenException $e ) {
-			$e->process();
-		} catch( HttpNotFoundException $e ) {
+		} catch( HttpClientException $e ) {
 			$e->process();
 		} catch( Exception $e ) {
 			echo $e->GetMessage();
@@ -32,6 +37,7 @@ class http {
 		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
 		$map = new map();
 		$tmp = require APP_SITE.'/sitemap.php';
+		$args = [];
 		foreach( $tmp as $k => $v ) {
 			$map->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
 		}
@@ -43,7 +49,7 @@ class http {
 		$flag = false;
 
 		//strip trailing slash and explode
-		$stack =  explode( '/', $_SERVER['REQUEST_URI'] );
+		$stack =  explode( '/', $_SERVER['DOCUMENT_URI'] );
 
 		while ( $tmp = next( $stack ) ) {
 			$flag = true;
@@ -61,7 +67,7 @@ class http {
 			if ( $flag ) break;
 		}
 
-		if ( $tmp ) $this->args[] = $tmp;
+		if ( $tmp ) $args[] = $tmp;
 		while ( $tmp = next( $stack ) ) $args[] = $tmp;
 
 		if ( $node['ctl'] === null ) {
@@ -73,13 +79,12 @@ class http {
 			}
 			throw new HttpNotFoundException();
 		} else {
-			if ( ! $flag && ( $_SERVER['REQUEST_URI'] != $nice ) ) {
+			if ( ! $flag && ( $_SERVER['DOCUMENT_URI'] != $nice ) ) {
 				throw new HttpRedirectException( $nice );
 			}
 		}
-		$this->control = $node['ctl'];
 		$this->path =  $nice;
-		return $map;
+		return [ $map, $node['ctl'], $args ];
 	}
 
 	private function loader( $classname ) {
@@ -112,14 +117,21 @@ class HttpRedirectException extends Exception {
 	}
 }
 
-class HttpForbiddenException extends Exception {
-	public function process() {
-		( new \control\http_status( null ) )->run( 403 );
+class HttpClientException extends Exception {
+	public function process(){}
+	protected function action( $code ) {
+		new \error\http( $code );
 	}
 }
 
-class HttpNotFoundException extends Exception {
+class HttpForbiddenException extends HttpClientException {
 	public function process() {
-		( new \control\http_status( null ) )->run( 404 );
+		parent::action( 403 );
+	}
+}
+
+class HttpNotFoundException extends HttpClientException {
+	public function process() {
+		parent::action( 404 );
 	}
 }

@@ -4,7 +4,7 @@
 	ID => [
 		Parent ( 1: '/' ),
 		Path,
-		Controller: empty assumed folder
+		Action: empty assumed folder
 		Options
 	]
 */
