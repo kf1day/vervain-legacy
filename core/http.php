@@ -118,7 +118,9 @@ class HttpRedirectException extends Exception {
 }
 
 class HttpClientException extends Exception {
-	public function process(){}
+	public function process(){
+		self::action( 400 );
+	}
 	protected function action( $code ) {
 		new \error\http( $code );
 	}
