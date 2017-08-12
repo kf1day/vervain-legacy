@@ -8,6 +8,23 @@ if ( isset( $_SERVER['DEBUG'] ) ) {
 }
 
 define( 'APP_ROOT', dirname( __FILE__ ) );
+define( 'SP_MAGIC', [
+	'__construct',
+	'__destruct',
+	'__call',
+	'__callStatic',
+	'__get',
+	'__set',
+	'__isset',
+	'__unset',
+	'__sleep',
+	'__wakeup',
+	'__toString',
+	'__invoke',
+	'__set_state',
+	'__clone',
+	'__debugInfo'
+	] );
 
 require APP_ROOT.'/core/http.php';
 require APP_ROOT.'/core/map.php';

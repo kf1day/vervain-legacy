@@ -6,25 +6,31 @@ class http {
 	
 	public function __construct() {
 		define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
+		define( 'APP_CACHE', APP_ROOT.'/cache/'.hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) );
 		
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
 			list( $map, $action, $args ) = $this->follow();
-			$index = ( count( $args ) > 0 ) ? array_shift( $args ) : 'index';
+			$index = ( count( $args ) > 0 ) ? $args[0] : 'index';
+			if ( in_array( $index, SP_MAGIC ) ) $index = 'index';
 			
 //			echo '\\action\\'.$action.'->'.$index.'('.print_r( $args, 1 ).')'; exit;
 			
-			$tmp = new ReflectionClass( '\\action\\'.$action );
-			if ( ! $tmp->isSubclassOf( '\\action\\core' ) ) {
+			$cls = new ReflectionClass( '\\action\\'.$action );
+			if ( ! $cls->isSubclassOf( '\\action\\core' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
-			} elseif( ! $tmp->hasMethod( $index ) ) {
-				throw new \HttpNotFoundException( 'Method "'.$index.'" not found!');
+			} elseif( $cls->hasMethod( $index ) ) {
+				array_shift( $args );
+				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $map, $this->path ), $args );
+			} elseif( $cls->hasMethod( '__call' ) ) {
+				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $map, $this->path ), $args );
+			} else {
+				throw new \ENotfound( 'Method "'.$index.'" not found!');
 			}
-			$tmp->getMethod( $index )->invokeArgs( $tmp->newInstance( $map, $this->path ), $args );
-		} catch( HttpRedirectException $e ) {
+		} catch( ERedirect $e ) {
 			$e->set_root( $this->path );
 			$e->process();
-		} catch( HttpClientException $e ) {
+		} catch( EClient $e ) {
 			$e->process();
 		} catch( Exception $e ) {
 			echo $e->GetMessage();
@@ -49,9 +55,9 @@ class http {
 		$flag = false;
 
 		//strip trailing slash and explode
-		$stack =  explode( '/', $_SERVER['DOCUMENT_URI'] );
+		$tmp = strtok( $_SERVER['DOCUMENT_URI'], '/' );
 
-		while ( $tmp = next( $stack ) ) {
+		while ( $tmp ) {
 			$flag = true;
 			if ( $child_nodes = $map->dive( $id ) ) {
 				foreach ( $child_nodes as $cid => $cnode ) {
@@ -65,22 +71,25 @@ class http {
 				}
 			}
 			if ( $flag ) break;
+			$tmp = strtok( '/' );
 		}
 
-		if ( $tmp ) $args[] = $tmp;
-		while ( $tmp = next( $stack ) ) $args[] = $tmp;
+		while ( $tmp ) {
+			$args[] = $tmp;
+			$tmp = strtok( '/' );
+		}
 
 		if ( $node['ctl'] === null ) {
 			if ( ! $flag ) {
 				while( ( $node['ctl'] === null ) && ( $node = $map->firstchild( $id ) ) ) $nice .= $node['path'].'/';
 				if ( $node['ctl'] ) {
-					throw new HttpRedirectException( $nice );
+					throw new ERedirect( $nice );
 				}
 			}
-			throw new HttpNotFoundException();
+			throw new ENotfound();
 		} else {
 			if ( ! $flag && ( $_SERVER['DOCUMENT_URI'] != $nice ) ) {
-				throw new HttpRedirectException( $nice );
+				throw new ERedirect( $nice );
 			}
 		}
 		$this->path =  $nice;
@@ -98,7 +107,7 @@ class http {
 }
 
 
-class HttpRedirectException extends Exception {
+class ERedirect extends Exception {
 	private $url = null;
 	
 	public function __construct( $url = null ) {
@@ -117,7 +126,7 @@ class HttpRedirectException extends Exception {
 	}
 }
 
-class HttpClientException extends Exception {
+class EClient extends Exception {
 	public function process(){
 		self::action( 400 );
 	}
@@ -126,13 +135,13 @@ class HttpClientException extends Exception {
 	}
 }
 
-class HttpForbiddenException extends HttpClientException {
+class EForbidden extends EClient {
 	public function process() {
 		parent::action( 403 );
 	}
 }
 
-class HttpNotFoundException extends HttpClientException {
+class ENotfound extends EClient {
 	public function process() {
 		parent::action( 404 );
 	}
