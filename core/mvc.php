@@ -1,7 +1,7 @@
 <?php
 
 namespace model {
-	abstract class root {
+	abstract class core {
 		public function get(){}
 	}
 }

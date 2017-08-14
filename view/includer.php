@@ -2,11 +2,12 @@
 
 class includer extends core {
 	
-	protected $type = ''
+	protected $type = '';
 	
 	public function __construct( $tpl_path, $type = '' ) {
 		parent::__construct( $tpl_path );
 		$this->type = ( in_array( $type, [ 'html', 'xslt', 'xml' ] ) ) ? $type : 'html';
+	}
 
 	public function display( $vars = null ) {
 		switch( $this->type ) {

@@ -5,8 +5,6 @@ class http {
 	private $path = '';
 	
 	public function __construct() {
-		define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
-		define( 'APP_CACHE', APP_ROOT.'/cache/'.hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) );
 		
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
@@ -146,3 +144,19 @@ class ENotfound extends EClient {
 		parent::action( 404 );
 	}
 }
+
+trait fscache {
+	protected function fscache_init() {
+		$path = APP_CACHE.'/'.str_replace( '\\', '_', __CLASS__);
+		switch( @filetype( $path ) ) {
+			case false:
+				mkdir( $path, 0700, true ); // #TODO: check mkdir return code
+			case 'dir':
+				return $path;
+				
+			default:
+				throw new Exception( 'Cache path is not a directory: '.$path );
+		}
+	}
+}
+

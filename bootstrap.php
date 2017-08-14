@@ -8,6 +8,9 @@ if ( isset( $_SERVER['DEBUG'] ) ) {
 }
 
 define( 'APP_ROOT', dirname( __FILE__ ) );
+define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
+define( 'APP_CACHE', APP_ROOT.'/cache/'.hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) ); // md4 is the fastest
+
 define( 'SP_MAGIC', [
 	'__construct',
 	'__destruct',

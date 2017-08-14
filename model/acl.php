@@ -1,9 +1,11 @@
 <?php namespace model;
 
 class acl extends core {
+use \fscache;
 	
 	protected $salt = '';
 	protected $ldap = [];
+	protected $path = '';
 	
 	protected $user = '';
 	protected $gsec = [];
@@ -11,6 +13,7 @@ class acl extends core {
 	
 	public function __construct( $salt ) {
 		$this->salt = $salt;
+		$this->path = $this->fscache_init();
 	}
 	
 	public function ldap_add_server( $host, $port, $base, $user, $pass ) {
@@ -89,11 +92,11 @@ class acl extends core {
 
 	protected function tokens_set_cache( $uid, $secret, $name, $gsec ) {
 		$gsec = serialize( $gsec );
-		return file_put_contents( APP_ROOT.'/runtime/'.$this->salt.'_'.$uid, $secret.'|'.$name.'|'.$gsec );
+		return file_put_contents( $this->path.'/'.$uid, $secret.'|'.$name.'|'.$gsec );
 	}
 
 	protected function tokens_get_cache( $uid ) {
-		$file = APP_ROOT.'/runtime/'.$this->salt.'_'.$uid;
+		$file = $this->path.'/'.$uid;
 		if ( is_file( $file ) && $data = file_get_contents( $file ) ) {
 			$data = explode( '|', $data, 3 );
 			if ( count( $data ) != 3 ) return false;
