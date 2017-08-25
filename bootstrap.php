@@ -30,7 +30,7 @@ define( 'SP_MAGIC', [
 	] );
 
 require APP_ROOT.'/core/http.php';
-require APP_ROOT.'/core/map.php';
+require APP_ROOT.'/core/pub.php';
 require APP_ROOT.'/core/mvc.php';
 
 new http();

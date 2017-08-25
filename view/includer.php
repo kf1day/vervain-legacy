@@ -27,9 +27,17 @@ class includer extends core {
 				echo '<?xml version="1.0" encoding="utf-8"?>';
 				break;
 		}
+		ob_start( [ $this, 'closure' ] );
 		while( $tpl = $this->fetch() ) {
 			include $tpl;
 		}
 		
+	}
+	
+	private function closure( $buf ) {
+		$buf = preg_replace( '/\s+|<!--.*?-->/', ' ', $buf );
+		$buf = preg_replace( '/>[\n\s\r\t]+?</', '><', $buf );
+		
+		return $buf;
 	}
 }

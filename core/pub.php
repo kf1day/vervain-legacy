@@ -36,3 +36,45 @@ class map {
 		return $this->pt[$ido][3];
 	}
 }
+
+
+class cache {
+	
+	protected $path = '';
+	
+	public function __construct( $module_name ) {
+		$this->path = APP_CACHE.'/'.$module_name;
+		switch( @filetype( $this->path ) ) {
+			case false:
+				if ( ! mkdir( $this->path, 0700, true ) ) {
+					throw new Exception( 'Cannot create cache directory: '.$this->path );
+				}
+			case 'dir':
+				return true;
+				
+			default:
+				throw new Exception( 'Cache path is not a directory: '.$this->path );
+		}
+	}
+	
+	public function store( $file, $data ) {
+		return file_put_contents( $this->path.'/'.$file, serialize( $data ) );
+	}
+	
+	public function fetch( $file ) {
+		if ( ! is_file( $this->path.'/'.$file ) ) {
+			return false;
+		}
+		$data = file_get_contents( $this->path.'/'.$file );
+		if ( $data && $data = @unserialize( $data ) ) {
+			return $data;
+		} else {
+			return false;
+		}
+	}
+
+	public function getpath() {
+		return $this->path;
+	}
+}
+

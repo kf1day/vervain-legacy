@@ -105,7 +105,7 @@ class http {
 }
 
 
-class ERedirect extends Exception {
+class ERedirect extends \Exception {
 	private $url = null;
 	
 	public function __construct( $url = null ) {
@@ -124,7 +124,7 @@ class ERedirect extends Exception {
 	}
 }
 
-class EClient extends Exception {
+class EClient extends \Exception {
 	public function process(){
 		self::action( 400 );
 	}
@@ -144,19 +144,3 @@ class ENotfound extends EClient {
 		parent::action( 404 );
 	}
 }
-
-trait fscache {
-	protected function fscache_init() {
-		$path = APP_CACHE.'/'.str_replace( '\\', '_', __CLASS__);
-		switch( @filetype( $path ) ) {
-			case false:
-				mkdir( $path, 0700, true ); // #TODO: check mkdir return code
-			case 'dir':
-				return $path;
-				
-			default:
-				throw new Exception( 'Cache path is not a directory: '.$path );
-		}
-	}
-}
-

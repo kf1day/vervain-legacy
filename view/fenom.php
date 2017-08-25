@@ -3,15 +3,14 @@
 require '/var/www/fenom/src/Fenom.php';
 
 class fenom extends core {
-use \fscache;
 	
 	protected $rdr = false;
 	
 	public function __construct( $tpl_path, $options ) {
 		parent::__construct( $tpl_path );
-		$cache = $this->fscache_init();
+		$cache = new \cache( 'fenom' );
 		\Fenom::registerAutoload();
-		$this->rdr = \Fenom::factory( $this->tpl_path, $cache, $options );
+		$this->rdr = \Fenom::factory( $this->tpl_path, $cache->getpath(), $options );
 	}
 	
 	public function display( $vars = null ) {
