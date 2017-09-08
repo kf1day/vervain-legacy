@@ -2,41 +2,63 @@
 
 class includer extends core {
 	
-	protected $type = '';
+	const STRIP = 0x01;
+	const O_FT1 = 0x02;
+	const O_FT2 = 0x04;
+	const O_FT3 = 0x08;
+
+	const TYPE_HTML = 0x10;
+	const TYPE_XSLT = 0x20;
+	const TYPE_XML = 0x30;
 	
-	public function __construct( $tpl_path, $type = '' ) {
+	protected $type = 0x00;
+	protected $strip = false;
+	
+	
+	public function __construct( $tpl_path, $opts = null ) {
 		parent::__construct( $tpl_path );
-		$this->type = ( in_array( $type, [ 'html', 'xslt', 'xml' ] ) ) ? $type : 'html';
+		if ( $opts !== null ) {
+			if ( $opts & self::STRIP ) $this->strip = true;
+			if ( $opts & 0xf0 ) $this->type = $opts & 0xf0;
+		}
 	}
 
 	public function display( $vars = null ) {
-		switch( $this->type ) {
-			case 'html':
-				header( 'Content-Type: text/html; charset=utf-8' );
-				echo '<!DOCTYPE html>';
-				break;
+		extract( $vars );
+		unset( $vars );
+		if ( $this->strip ) ob_start( [ $this, 'closure' ] );
 
-			case 'xslt':
+		switch( $this->type ) {
+
+			case self::TYPE_HTML:
+				header( 'Content-Type: text/html; charset=utf-8' );
+				echo '<!DOCTYPE html>'.PHP_EOL;
+				break;
+			
+			case self::TYPE_XSLT:
 				header( 'Content-Type: application/xml; charset=utf-8' );
-				echo '<?xml version="1.0" encoding="utf-8"?>';
+				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
 /*				echo '<?xml-stylesheet type="text/xsl" href="'.$this->templates[0].'" ?>';	*/
 				break;
 				
-			case 'xml':
+			case self::TYPE_XML:
 				header( 'Content-Type: text/xml; charset=utf-8' );
-				echo '<?xml version="1.0" encoding="utf-8"?>';
+				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
 				break;
+				
+			default:
+				header( 'Content-Type: text/plain; charset=utf-8' );
+				
 		}
-		ob_start( [ $this, 'closure' ] );
 		while( $tpl = $this->fetch() ) {
 			include $tpl;
 		}
 		
 	}
 	
-	private function closure( $buf ) {
-		$buf = preg_replace( '/\s+|<!--.*?-->/', ' ', $buf );
-		$buf = preg_replace( '/>[\n\s\r\t]+?</', '><', $buf );
+	protected function closure( $buf ) {
+		$buf = preg_replace( '/<!--.*?-->|(?<=>)\s*[\r\n]+|[\r\n]+\s*(?=<)/s', '', $buf );
+//		$buf = preg_replace( '/\s{2,}|[\r\n]+/', ' ', $buf );
 		
 		return $buf;
 	}
