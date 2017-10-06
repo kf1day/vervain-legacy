@@ -8,7 +8,7 @@ class http {
 		
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
-			list( $map, $action, $args ) = $this->follow();
+			list( $tree, $action, $args ) = $this->follow();
 			$index = ( count( $args ) > 0 ) ? $args[0] : 'index';
 			if ( in_array( $index, SP_MAGIC ) ) $index = 'index';
 			
@@ -19,9 +19,9 @@ class http {
 				throw new Exception( 'Class in not an ACTION' );
 			} elseif( $cls->hasMethod( $index ) ) {
 				array_shift( $args );
-				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $map, $this->path ), $args );
+				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $tree, $this->path ), $args );
 			} elseif( $cls->hasMethod( '__call' ) ) {
-				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $map, $this->path ), $args );
+				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $tree, $this->path ), $args );
 			} else {
 				throw new \ENotfound( 'Method "'.$index.'" not found!');
 			}
@@ -39,15 +39,15 @@ class http {
 
 	private function follow() {
 		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
-		$map = new map();
+		$tree = new tree();
 		$tmp = require APP_SITE.'/sitemap.php';
 		$args = [];
 		foreach( $tmp as $k => $v ) {
-			$map->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
+			$tree->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
 		}
 		$id = 0;
 		
-		$node = $map->firstchild( $id );
+		$node = $tree->firstchild( $id );
 
 		$nice = '/';
 		$flag = false;
@@ -57,7 +57,7 @@ class http {
 
 		while ( $tmp ) {
 			$flag = true;
-			if ( $child_nodes = $map->dive( $id ) ) {
+			if ( $child_nodes = $tree->dive( $id ) ) {
 				foreach ( $child_nodes as $cid => $cnode ) {
 					if ( $tmp == $cnode['path'] ) {
 						$nice .= $tmp.'/';
@@ -79,7 +79,7 @@ class http {
 
 		if ( $node['ctl'] === null ) {
 			if ( ! $flag ) {
-				while( ( $node['ctl'] === null ) && ( $node = $map->firstchild( $id ) ) ) $nice .= $node['path'].'/';
+				while( ( $node['ctl'] === null ) && ( $node = $tree->firstchild( $id ) ) ) $nice .= $node['path'].'/';
 				if ( $node['ctl'] ) {
 					throw new ERedirect( $nice );
 				}
@@ -91,7 +91,7 @@ class http {
 			}
 		}
 		$this->path =  $nice;
-		return [ $map, $node['ctl'], $args ];
+		return [ $tree, $node['ctl'], $args ];
 	}
 
 	private function loader( $classname ) {

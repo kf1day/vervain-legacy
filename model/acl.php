@@ -2,17 +2,13 @@
 
 class acl extends core {
 
-	protected $salt = '';
 	protected $ldap = [];
-	protected $cache = null;
-	
 	protected $user = '';
 	protected $gsec = [];
 	
 	
-	public function __construct( $salt ) {
-		$this->salt = $salt;
-		$this->cache = new \cache( 'acl' );
+	public function __construct( $cacher ) {
+		$this->cache = $cacher;
 	}
 	
 	public function ldap_add_server( $host, $port, $base, $user, $pass ) {
@@ -48,8 +44,7 @@ class acl extends core {
 				return true;
 			}
 		}
-		return false;
-			
+		throw new \EForbidden();
 	}
 	
 	public function get_name() {
@@ -73,7 +68,7 @@ class acl extends core {
 	
 	
 	protected function keyring( $secret, $compare = null ) {
-		$hash = hash( 'sha256', $this->salt.$secret.$_SERVER['REMOTE_ADDR'] );
+		$hash = hash( 'sha256', APP_HASH.$secret.$_SERVER['REMOTE_ADDR'] );
 		if ( $compare ) {
 			return ( $hash == $compare );
 		} else {
@@ -90,11 +85,14 @@ class acl extends core {
 	}
 
 	protected function tokens_set_cache( $uid, $secret, $name, $gsec ) {
-		$this->cache->store( $uid, [ $secret, $name, $gsec ] );
+		$this->cache->set( $uid, [ $secret, $name, $gsec ] );
 	}
 
 	protected function tokens_get_cache( $uid ) {
-		$data = $this->cache->fetch( $uid );
+		$ret = false;
+//		foreach ( $this->memcache as &$v ) {}
+//			if ( is_array( $v ) ) $v = new db\ldap( $v[0], $v[1], $v[2], $v[3], $v[4] );
+		$data = $this->cache->get( $uid );
 		if ( $data ) {
 			return [ 'secret' => $data[0], 'name' => $data[1], 'gsec' => $data[2] ];
 		} else {

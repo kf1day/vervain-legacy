@@ -24,8 +24,10 @@ class includer extends core {
 	}
 
 	public function display( $vars = null ) {
-		extract( $vars );
-		unset( $vars );
+		if ( is_array( $vars ) ) {
+			extract( $vars );
+			unset( $vars );
+		}
 		if ( $this->strip ) ob_start( [ $this, 'closure' ] );
 
 		switch( $this->type ) {
@@ -53,7 +55,7 @@ class includer extends core {
 		while( $tpl = $this->fetch() ) {
 			include $tpl;
 		}
-		
+		ob_end_flush();
 	}
 	
 	protected function closure( $buf ) {

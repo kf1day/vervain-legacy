@@ -54,10 +54,10 @@ namespace view {
 
 namespace action {
 	abstract class core {
-		protected $map = null;
+		protected $tree = null;
 		protected $path = null;
-		public function __construct( $map, $path ) {
-			$this->map = $map;
+		public function __construct( $tree, $path ) {
+			$this->tree = $tree;
 			$this->path = $path;
 		}
 		public function index() {
