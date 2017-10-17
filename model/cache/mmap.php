@@ -23,7 +23,7 @@ class mmap {
 
 	public function stack( $key, $val, $index = null ) {
 		$tmp = $this->pt->get( $key );
-		if ( is_array( $tmp ) ) {
+		if ( $tmp === false || is_array( $tmp ) ) {
 			if ( $index ) {
 				$tmp[$index] = $val;
 			} else {
