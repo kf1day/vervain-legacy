@@ -25,16 +25,19 @@ class mysql {
 
 	public function get( $table, $fields, $filter = false, $sort = false ) {
 		if ( is_array( $fields ) ) {
+			array_walk( $fields, [ $this, 'escape' ] );
 			$fields = implode( '`, `', $fields );
 		}
 		$q = 'SELECT `'.$fields.'` FROM `'.$table.'`';
 		if ( is_array( $filter ) && count( $filter ) > 0 ) {
 			$t = [];
+			array_walk( $filter, [ $this, 'escape' ] );
 			foreach( $filter as $k => $v ) $t[] = '`'.$k.'` = "'.$v.'"';
 			$q .= ' WHERE '.implode( ' AND ', $t );
 		}
 		if ( ( is_array( $sort ) && count( $sort ) > 0 ) || ( $sort && $sort = [ $sort ] ) ) {
 			$t = [];
+			array_walk( $sort, [ $this, 'escape' ] );
 			foreach( $sort as $v ) {
 				$v = '`'.$v.'`';
 				$v = preg_replace( '/^`\+(.*)`$/', '`$1` ASC', $v );
@@ -106,6 +109,11 @@ class mysql {
 		$q = 'UPDATE `'.$table.'` SET '.implode( ', ', $qfields).' WHERE '.implode( ' AND ', $qcase );
 		$q = $this->pt->query( $q.';' );
 		return ( $q ) ? $this->pt->affected_rows : false;
+	}
+	
+	protected function escape( &$item, &$key ) {
+		$item = preg_replace( '/[ ;\'"]/', '', $item );
+		$key = preg_replace( '/[ ;\'"]/', '', $key );
 	}
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-class http {
+final class http {
 	
 	private $path = '';
 	
@@ -11,8 +11,6 @@ class http {
 			list( $tree, $action, $args ) = $this->follow();
 			$index = ( count( $args ) > 0 ) ? $args[0] : 'index';
 			if ( in_array( $index, SP_MAGIC ) ) $index = 'index';
-			
-//			echo '\\action\\'.$action.'->'.$index.'('.print_r( $args, 1 ).')'; exit;
 			
 			$cls = new ReflectionClass( '\\action\\'.$action );
 			if ( ! $cls->isSubclassOf( '\\action\\core' ) ) {
