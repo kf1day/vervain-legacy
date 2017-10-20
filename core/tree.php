@@ -1,6 +1,6 @@
 <?php
 
-class map {
+class tree {
 
 	private $pt = [ 0 => [ 0, false, [], false ] ];
 						// 0: id

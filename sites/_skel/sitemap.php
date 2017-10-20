@@ -4,9 +4,8 @@
 	ID => [
 		Parent ( 1: '/' ),
 		Path,
-		Controller: empty assumed folder
-		ACL #todo: *=ALL|<sid>|<dn> ,
-		Title
+		Action: empty assumed folder
+		Options
 	]
 */
 
