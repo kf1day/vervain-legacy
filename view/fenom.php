@@ -8,7 +8,7 @@ class fenom extends core {
 	
 	public function __construct( $tpl_path, $options ) {
 		parent::__construct( $tpl_path );
-		$cache = new \cache( 'fenom' );
+		$cache = new \model\cache\fs();
 		\Fenom::registerAutoload();
 		$this->rdr = \Fenom::factory( $this->tpl_path, $cache->getpath(), $options );
 	}

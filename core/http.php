@@ -21,7 +21,7 @@ final class http {
 			} elseif( $cls->hasMethod( '__call' ) ) {
 				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $tree, $this->path ), $args );
 			} else {
-				throw new \ENotfound( 'Method "'.$index.'" not found!');
+				throw new \ENotfound( 'Method "\\action\\'.$action.'->'.$index.'" not found!');
 			}
 		} catch( ERedirect $e ) {
 			$e->set_root( $this->path );
