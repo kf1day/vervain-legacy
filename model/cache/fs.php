@@ -1,9 +1,9 @@
 <?php namespace model\cache;
 
 class fs {
-	
+
 	protected $path = '';
-	
+
 	public function __construct() {
 		$this->path = APP_ROOT.'/cache/'.APP_HASH;
 		switch( @filetype( $this->path ) ) {
@@ -13,16 +13,16 @@ class fs {
 				}
 			case 'dir':
 				return true;
-				
+
 			default:
 				throw new \Exception( 'Cache path is not a directory: '.$this->path );
 		}
 	}
-	
+
 	public function set( $file, $data ) {
 		return file_put_contents( $this->path.'/'.$file, $data );
 	}
-	
+
 	public function get( $file ) {
 		if ( ! is_file( $this->path.'/'.$file ) ) {
 			return false;

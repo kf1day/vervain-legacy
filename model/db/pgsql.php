@@ -44,7 +44,7 @@ class pgsql {
 		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
 		return pg_num_rows( $this->rx );
 	}
-	
+
 	public function fetch() {
 		if ( $this->rx ) {
 			return pg_fetch_row( $this->rx );
@@ -52,7 +52,7 @@ class pgsql {
 			return false;
 		}
 	}
-	
+
 	public function fetch_all() {
 		$fff = [];
 		if ( $this->rx ) {

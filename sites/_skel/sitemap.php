@@ -5,7 +5,7 @@
 		Parent ( 1: '/' ),
 		Path,
 		Action: empty assumed folder
-		Options
+		Option
 	]
 */
 

@@ -28,7 +28,7 @@ class flow extends core {
 						$tok = explode( $otag, $line = $tok[1], 2 );
 					}
 					if ( $otag == '<!--' ) echo $line;
-					
+
 				}
 			}
 			fclose( $h );

@@ -1,25 +1,27 @@
 <?php namespace model\cache;
 
 class fs_vars extends fs {
-	
+
 	protected $vars = [];
-	
+
 	public function __construct() {
 		parent::__construct();
 		$tmp = parent::get( '__fs_vars_serialized' );
-		if ( $tmp !== false && $tmp = @unserialize( $tmp ) ) {
+//		if ( $tmp !== false && $tmp = @unserialize( $tmp ) ) {
+		if ( $tmp !== false && $tmp = @igbinary_unserialize( $tmp ) ) {
 			$this->vars = $tmp;
 		}
 	}
-	
+
 	public function __destruct() {
-		parent::set( '__fs_vars_serialized', serialize( $this->vars ) );
+//		parent::set( '__fs_vars_serialized', serialize( $this->vars ) );
+		parent::set( '__fs_vars_serialized', igbinary_serialize( $this->vars ) );
 	}
-	
+
 	public function set( $key, $val ) {
 		$this->vars[$key] = $val;
 	}
-	
+
 	public function get( $key ) {
 		if ( isset( $this->vars[$key] ) ) {
 			return $this->vars[$key];
@@ -45,5 +47,5 @@ class fs_vars extends fs {
 			return false;
 		}
 	}
-	
+
 }

@@ -11,16 +11,16 @@ namespace view {
 		protected $tpl_path = '';
 		protected $tpl_list = [];
 		protected $tpl_next = null;
-		
+
 		public function __construct( $tpl_path = '' ) {
 			$this->tpl_path = ( $tpl_path == '' ) ? APP_SITE : APP_SITE.'/'.trim( $tpl_path, '/' );
 			if ( ! is_dir( $this->tpl_path ) ) throw new \Exception( 'Template directory is unreadable: '.$this->tpl_path );
 		}
-		
+
 		final public function __invoke( $vars = null ) {
 			$this->display( $vars );
 		}
-		
+
 		public function load( $template ) {
 			$template = func_get_args();
 			foreach( $template as $tmp ) {
@@ -33,7 +33,7 @@ namespace view {
 				}
 			}
 		}
-		
+
 		protected function fetch() {
 			if ( $this->tpl_next === false ) {
 				return false;
@@ -47,7 +47,7 @@ namespace view {
 			}
 			return false;
 		}
-		
+
 		abstract public function display( $vars = null );
 	}
 }
