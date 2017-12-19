@@ -2,37 +2,36 @@
 
 class tree {
 
-	private $pt = [ 0 => [ 0, false, [], false ] ];
-						// 0: id
-						// 1: pointer to parent
-						// 2: array pointer to child
-						// 3: mixed data
+	private $pt = [ 0 => [ 'parent' => null, 'child' => [], 'data' => null ] ];
+						// parent id
+						// array of child id'
+						// mixed data
 
-	public function add( $id, $rel, $node ) {
-		if ( !isset( $this->pt[$rel] ) ) $rel = 0;
-		$this->pt[$id] = [ $id, &$this->pt[$rel], [], $node ];
-		$this->pt[$rel][2][] = &$this->pt[$id];
+	public function add( $id, $rel, $data ) {
+		if ( empty( $this->pt[$rel] ) ) $rel = 0;
+		$this->pt[$id] = [ 'parent' => $rel, 'child' => [], 'data' => $data ];
+		$this->pt[$rel]['child'][$id] = $id;
 	}
 
 	public function dive( $id ) {
-		if ( !isset( $this->pt[$id] ) ) return false;
-		$fff = false;
-		foreach ( $this->pt[$id][2] as $v ) { 
-			$fff[$v[0]] = $v[3];
+		if ( empty( $this->pt[$id] ) || count( $this->pt[$id]['child'] ) == 0 ) return false;
+		$fff = [];
+		foreach ( $this->pt[$id]['child'] as $k => $v ) {
+			$fff[$k] = $this->pt[$v]['data'];
 		}
 		return $fff;
 	}
 
-	public function firstchild( &$id ) {
-		if ( !isset( $this->pt[$id] ) || !isset( $this->pt[$id][2][0] ) ) return false;
-		$id = $this->pt[$id][2][0][0]; // some node -> array children -> first node -> id
-		return $this->pt[$id][3];
+	public function first_child( &$id ) {
+		if ( empty( $this->pt[$id] ) || count( $this->pt[$id]['child'] ) == 0 ) return false;
+		$id = reset( $this->pt[$id]['child'] );
+		return $this->pt[$id]['data'];
 	}
 
 	public function pop( &$id ) {
-		if ( $id == 0 || !isset( $this->pt[$id] ) ) return false;
+		if ( $id == 0 || empty( $this->pt[$id] ) ) return false;
 		$ido = $id;
-		$id = $this->pt[$id][1][0]; // some node -> parent -> id
-		return $this->pt[$ido][3];
+		$id = $this->pt[$id]['parent'];
+		return $this->pt[$ido]['data'];
 	}
 }

@@ -5,16 +5,16 @@ class acl extends core {
 	protected $ldap = [];
 	protected $user = '';
 	protected $gsec = [];
-	
-	
+
+
 	public function __construct( $cacher ) {
 		$this->cache = $cacher;
 	}
-	
+
 	public function ldap_add_server( $host, $port, $base, $user, $pass ) {
 		$this->ldap[] = [ $host, $port, $base, $user, $pass ];
 	}
-	
+
 	public function login_gss() {
 		$upn = strtolower( $_SERVER['PHP_AUTH_USER'] ?? '' );
 		$data = $this->tokens_get_ldap( $upn );
@@ -26,7 +26,7 @@ class acl extends core {
 			return false;
 		}
 	}
-	
+
 	public function auth_cookie() {
 		$uid = $_COOKIE['UID'] ?? false;
 		$upn = '';
@@ -36,7 +36,7 @@ class acl extends core {
 			if ( ( $data = $this->tokens_get_cache( $uid ) ) && $this->keyring( $data['secret'], $hash ) ) { // have cache + cache is valid
 			$this->user = $data['name'];
 				$this->gsec = $data['gsec'];
-				return true; 
+				return true;
 			} elseif( ( $upn = $this->usercode( $uid, 1 ) ) && $data = $this->tokens_get_ldap( $upn ) && $this->keyring( $data['secret'], $hash ) ) {// search ldap
 				$this->user = $data['name'];
 				$this->gsec = $data['gsec'];
@@ -44,13 +44,13 @@ class acl extends core {
 				return true;
 			}
 		}
-		throw new \EForbidden();
+		throw new \EHttpClient( 403 );
 	}
-	
+
 	public function get_name() {
 		return $this->user;
 	}
-	
+
 	public function get_gsec() {
 		$ret = [];
 		foreach ( $this->gsec as $dom => $v ) {
@@ -61,12 +61,12 @@ class acl extends core {
 		}
 		return implode( '|', $ret );
 	}
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	protected function keyring( $secret, $compare = null ) {
 		$hash = hash( 'sha256', APP_HASH.$secret.$_SERVER['REMOTE_ADDR'] );
 		if ( $compare ) {
@@ -75,7 +75,7 @@ class acl extends core {
 			return $hash;
 		}
 	}
-	
+
 	protected function usercode( $upn_uid, $decode = false ) {
 		if ( $decode ) {
 			return @hex2bin( $upn_uid ) ?? false;
@@ -99,7 +99,7 @@ class acl extends core {
 			return false;
 		}
 	}
-	
+
 	protected function tokens_get_ldap( $upn ) {
 		$dn = '';
 		foreach ( $this->ldap as &$v ) {
