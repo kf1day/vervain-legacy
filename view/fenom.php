@@ -2,7 +2,7 @@
 
 require '/var/www/fenom/src/Fenom.php';
 
-class fenom extends core {
+class fenom extends \app\view {
 
 	protected $rdr = false;
 

@@ -13,7 +13,7 @@ final class http {
 				$index = 'index';
 			}
 			$cls = new ReflectionClass( '\\action\\'.$action );
-			if ( ! $cls->isSubclassOf( '\\action\\core' ) ) {
+			if ( ! $cls->isSubclassOf( '\\app\\action' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
 			} elseif( $cls->hasMethod( $index ) ) {
 				array_shift( $args );

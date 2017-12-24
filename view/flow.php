@@ -1,6 +1,6 @@
 <?php namespace view;
 
-class flow extends core {
+class flow extends \app\view {
 
 	public function display( $vars = null ) {
 		$patt = false;

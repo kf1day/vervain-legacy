@@ -1,6 +1,6 @@
 <?php
 
-class odbc {
+class odbc extends \app\model {
 
 	protected $pt = null;
 	protected $rx = null;

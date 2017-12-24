@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class ldap  {
+class ldap extends \app\model {
 
 	protected $pt = false;
 	protected $rx = false;

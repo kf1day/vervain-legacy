@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class mysql {
+class mysql extends \app\model {
 
 	private $pt = null;
 	protected $rx = null;

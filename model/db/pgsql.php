@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class pgsql implements _sql {
+class pgsql extends \app\model implements _sql {
 
 	protected $pt = null;
 	protected $rx = null;

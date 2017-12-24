@@ -1,6 +1,6 @@
 <?php namespace model;
 
-class acl extends core {
+class acl extends \app\model {
 
 	protected $ldap = [];
 	protected $user = '';

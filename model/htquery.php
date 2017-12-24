@@ -1,6 +1,6 @@
 <?php namespace model;
 
-class htquery {
+class htquery extends \app\model {
 
 	private static function query( $uri, $method, $head = null, $data = null  ) {
 
