@@ -8,18 +8,18 @@ final class http {
 
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
-			list( $tree, $action, $args ) = $this->follow();
-			$index = ( count( $args ) > 0 ) ? $args[0] : 'index';
-			if ( in_array( $index, SP_MAGIC ) ) $index = 'index';
-
+			$action = $this->routing( $args );
+			if ( count( $args ) === 0 || ( $index = ltrim( $args[0], '_' ) ) === '' ) {
+				$index = 'index';
+			}
 			$cls = new ReflectionClass( '\\action\\'.$action );
 			if ( ! $cls->isSubclassOf( '\\action\\core' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
 			} elseif( $cls->hasMethod( $index ) ) {
 				array_shift( $args );
-				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $tree, $this->path ), $args );
+				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( null, $this->path ), $args );
 			} elseif( $cls->hasMethod( '__call' ) ) {
-				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $tree, $this->path ), $args );
+				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( null, $this->path ), $args );
 			} else {
 				throw new EHttpClient( 404, null, 'Method "\\action\\'.$action.'->'.$index.'" not found!');
 			}
@@ -34,61 +34,94 @@ final class http {
 		}
 	}
 
-	private function follow() {
+	private function routing( &$args ) {
 		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
-		$tree = new tree();
-		$tmp = require APP_SITE.'/sitemap.php';
-		$args = [];
-		foreach( $tmp as $k => $v ) {
-			$tree->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
-		}
-		$id = 0;
-		$node = $tree->first_child( $id );
+		$map = require APP_SITE.'/sitemap.php';
+		$this->map_parse( $map );
 
+		$uri = $_SERVER['DOCUMENT_URI'];
+		$args = [];
 
 		$nice = '/';
+
 		$flag = false;
+		$node = strtok( $uri, '/' );
 
-		//strip trailing slash and explode
-		$tmp = strtok( $_SERVER['DOCUMENT_URI'], '/' );
-		while ( $tmp ) {
+		if ( $map[0] !== '' ) {
+			$nice .= $map[0] . '/';
+			if( $node === $map[0] ) {
+				$node = strtok( '/' );
+			} else {
+				$flag = true;
+			}
+		}
+
+		while ( $node ) {
 			$flag = true;
-			if ( $child_nodes = $tree->dive( $id ) ) {
-				foreach ( $child_nodes as $cid => $cnode ) {
-					if ( $tmp == $cnode['path'] ) {
-						$nice .= $tmp.'/';
-						$node = $cnode;
-						$id = $cid;
-						$flag = false;
-						break;
-					}
+			if ( empty( $map[2] ) ) break;
+			foreach ( $map[2] as $map_nextlevel ) {
+				if ( $map_nextlevel[0] === '*' ) {
+					$flag = false;
+					$nice .= $node . '/';
+					$args[] = $node;
+					$node = strtok( '/' );
+					$map = $map_nextlevel;
+				} elseif ( $node === $map_nextlevel[0] ) {
+					$flag = false;
+					$nice .= $node . '/';
+					$node = strtok( '/' );
+					$map = $map_nextlevel;
+					break;
 				}
 			}
-
 			if ( $flag ) break;
-			$tmp = strtok( '/' );
 		}
 
-		while ( $tmp ) {
-			$args[] = $tmp;
-			$tmp = strtok( '/' );
+		if ( $map[1] === null ) {
+			if ( $flag ) throw new EHttpClient( 404 );
+			while( $map[1] === null ) {
+				$map = reset( $map[2] );
+				$nice .= $map[0] . '/';
+			}
+			throw new EHttpRedirect( $nice );
+		} else {
+			while( $node ) {
+				$args[] = $node;
+				$node = strtok( '/' );
+			}
 		}
 
-		if ( $node['ctl'] === null ) {
-			if ( ! $flag ) {
-				while( ( $node['ctl'] === null ) && ( $node = $tree->first_child( $id ) ) ) $nice .= $node['path'].'/';
-				if ( $node['ctl'] ) {
-					throw new EHttpRedirect( $nice );
+		if ( ! $flag && $_SERVER['DOCUMENT_URI'] !== $nice ) throw new EHttpRedirect( $nice );
+
+		$this->path;
+		return $map[1];
+	}
+
+	private function map_parse( &$map, $path = '' ) {
+		$map[0] = trim( $map[0], ' /' );
+		if ( $map[0] !== '' ) $path .= '/' . $map[0];
+
+		$stack = explode( '/', $map[0] );
+		$map[0] = array_pop( $stack );
+		if ( $map[0] === '*' && $map[1] !== null ) throw new Exception( 'Sitemap error: Masked location must use no action: ' . $path );
+		if ( empty( $map[2] ) ) {
+			if ( $map[1] === null ) throw new Exception( 'Sitemap error: Dead-end detected: ' . $path );
+		} else {
+			$new = [];
+			foreach( $map[2] as &$map_nextlevel ) {
+				$this->map_parse( $map_nextlevel, $path );
+				$id = $map_nextlevel[0];
+				if ( empty( $new[$id] ) ) {
+					$new[$id] = $map_nextlevel;
+				} else {
+					$new[$id][2] = array_merge( $new[$id][2], $map_nextlevel[2] );
 				}
 			}
-			throw new EHttpClient( 404 );
-		} else {
-			if ( ! $flag && ( $_SERVER['DOCUMENT_URI'] != $nice ) ) {
-				throw new EHttpRedirect( $nice );
-			}
+			$map[2] = $new;
 		}
-		$this->path =  $nice;
-		return [ $tree, $node['ctl'], $args ];
+		while ( $node = array_pop( $stack ) ) {
+			$map = [ $node, null, [ $map[0] => $map ] ];
+		}
 	}
 
 	private function loader( $classname ) {
@@ -102,7 +135,7 @@ final class http {
 }
 
 
-class EHttpRedirect extends \Exception {
+class EHttpRedirect extends Exception {
 	private $url = null;
 
 	public function __construct( $url = null ) {
@@ -116,7 +149,8 @@ class EHttpRedirect extends \Exception {
 		$scheme = 'http';
 		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
 		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
-		$host = $_SERVER['SERVER_NAME'] . ( $_SERVER['SERVER_PORT'] == 80 ? '' : ':' . $_SERVER['SERVER_PORT'] );
+		$host = $_SERVER['SERVER_NAME'];
+		if ( ! in_array( $scheme . $_SERVER['SERVER_PORT'], [ 'http80', 'https443' ] ) ) $host .= ':' . $_SERVER['SERVER_PORT'];
 		header( 'Location: ' . $scheme . '://' . $host . $this->url, true, 302 ); // absolute path required due to RFC
 		exit;
 	}

@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class pgsql {
+class pgsql implements _sql {
 
 	protected $pt = null;
 	protected $rx = null;
@@ -16,11 +16,16 @@ class pgsql {
 		$this->pt = @pg_pconnect( $s );
 
 		if ( ! $this->pt ) {
-			throw new \Exception( 'DBA connection failed' );
+			throw new \Exception( 'PGSQL connection failed' );
 		}
 	}
 
-	public function get( $table, $fields, $filter = false, $sort = false ) {
+	public function get( string $table, array $fields, $filter = null, $sort = null ) {
+		$this->select( $table, $fields, $filter, $sort );
+		return $this->fetch_all();
+	}
+
+	public function select( string $table, array $fields, $filter = null, $sort = null ) {
 		if ( is_array( $fields ) ) {
 			$fields = implode( '", "', $fields );
 		}
@@ -65,14 +70,14 @@ class pgsql {
 		return $fff;
 	}
 
-	public function put( $table, $fields ) {
+	public function put( string $table, array $fields ) {
 		if ( !is_array( $fields ) || count( $fields ) == 0 ) return false;
 		$q = 'INSERT INTO `'.$table.'` ('.implode(',', array_keys( $fields ) ).') VALUES("'.implode('", "', $fields ).'")';
 		$q = $this->pt->query( $q.';' );
 		return ( $q ) ? $this->pt->insert_id : false;
 	}
 
-	public function del( $table, $case ) {
+	public function del( string $table, array $case ) {
 		if ( !is_array( $case ) || count( $case ) == 0 ) return false;
 		$qcase = [];
 		foreach( $case as $k => $v ) {
@@ -83,7 +88,7 @@ class pgsql {
 		return ( $q ) ? $this->pt->affected_rows : false;
 	}
 
-	public function upd( $table, $fields, $case ) {
+	public function upd( string $table, array $fields, $case = null ) {
 		if ( !is_array( $fields ) || count( $fields ) == 0 ) return false;
 		if ( !is_array( $case ) || count( $case ) == 0 ) return false;
 		$q = [];
