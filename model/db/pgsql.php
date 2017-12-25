@@ -6,7 +6,9 @@ class pgsql extends \app\model implements _sql {
 	protected $rx = null;
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
-
+		
+		if ( ! extension_loaded( 'pgsql' ) ) throw new \Exception( 'PGSQL module not loaded' );
+		
 		$s = "options='--client_encoding=UTF8'";
 		if ( $host != '' ) $s .= ' host='.$host;
 		if ( $port != '' ) $s .= ' port='.$port;
@@ -26,30 +28,35 @@ class pgsql extends \app\model implements _sql {
 	}
 
 	public function select( string $table, array $fields, $filter = null, $sort = null ) {
-		if ( is_array( $fields ) ) {
-			$fields = implode( '", "', $fields );
+
+		if ( is_array( $filter ) && ! empty( $filter ) ) {
+			$q = pg_select( $this->pt, $table, $filter, PGSQL_DML_STRING );
+			$q = rtrim( $q, ';' );
+			$t = explode( '*', $q, 2 );
+			$q = sprintf( '%s "%s" %s', $t[0], implode( '", "', $fields ), $t[1] );
+		} else {
+			$q = sprintf( 'SELECT "%s" FROM "%s"', implode( '", "', $fields ), $table );
 		}
-		$q = 'SELECT "'.$fields.'" FROM "'.$table.'"';
-		if ( is_array( $filter ) && count( $filter ) > 0 ) {
-			$t = [];
-			foreach( $filter as $k => $v ) $t[] = '"'.$k.'" = '.$v.'';
-			$q .= ' WHERE '.implode( ' AND ', $t );
-		}
-		if ( ( is_array( $sort ) && count( $sort ) > 0 ) || ( $sort && $sort = [ $sort ] ) ) {
-			$t = [];
-			foreach( $sort as $v ) {
-				$v = '"'.$v.'"';
-				$v = preg_replace( '/^"\+(.*)"$/', '"$1" ASC', $v );
-				$v = preg_replace( '/^"\-(.*)"$/', '"$1" DESC', $v );
-				$t[] = $v;
+
+		if ( ( is_array( $sort ) && ! empty( $sort ) ) ) {
+
+			foreach( $sort as &$v ) {
+				$t = ltrim( $v, '+-' );
+				if ( $v[0] === '+' ) {
+					$v = '"' . $t . '" ASC';
+				} elseif ( $v[0] === '-' ) {
+					$v = '"' . $t . '" DESC';
+				} else {
+					$v = '"' . $t . '"';
+				}
 			}
-			$q .= ' ORDER BY '.implode( ', ', $t );
+			$q .= ' ORDER BY '.implode( ', ', $sort );
 		}
 		$this->rx = @pg_query( $this->pt, $q.';' );
-		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
+		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
 		return pg_num_rows( $this->rx );
 	}
-
+	
 	public function fetch() {
 		if ( $this->rx ) {
 			return pg_fetch_row( $this->rx );
@@ -59,49 +66,47 @@ class pgsql extends \app\model implements _sql {
 	}
 
 	public function fetch_all() {
-		$fff = [];
 		if ( $this->rx ) {
-			while( $tmp = pg_fetch_row( $this->rx ) ) {
-				$fff[] = $tmp;
+			$fff = [];
+			while( $t = pg_fetch_row( $this->rx ) ) {
+				$fff[] = $t;
 			}
+			pg_free_result( $this->rx );
+			$this->rx = null;
+			return $fff;
 		} else {
 			return false;
 		}
-		return $fff;
 	}
 
 	public function put( string $table, array $fields ) {
-		if ( !is_array( $fields ) || count( $fields ) == 0 ) return false;
-		$q = 'INSERT INTO `'.$table.'` ('.implode(',', array_keys( $fields ) ).') VALUES("'.implode('", "', $fields ).'")';
-		$q = $this->pt->query( $q.';' );
-		return ( $q ) ? $this->pt->insert_id : false;
+		$q = pg_insert( $this->pt, $table, $fields, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
 	}
 
-	public function del( string $table, array $case ) {
-		if ( !is_array( $case ) || count( $case ) == 0 ) return false;
-		$qcase = [];
-		foreach( $case as $k => $v ) {
-			$qcase[] = '`'.$k.'` = "'.$v.'"';
-		}
-		$q = 'DELETE FROM `'.$table.'` WHERE '.implode( ' AND ', $qcase );
-		$q = $this->pt->query( $q.';' );
-		return ( $q ) ? $this->pt->affected_rows : false;
+	public function del( string $table, array $filter ) {
+		$q = pg_delete( $this->pt, $table, $filter, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
 	}
 
-	public function upd( string $table, array $fields, $case = null ) {
-		if ( !is_array( $fields ) || count( $fields ) == 0 ) return false;
-		if ( !is_array( $case ) || count( $case ) == 0 ) return false;
-		$q = [];
-		foreach( $fields as $k => $v ) {
-			if ( !is_numeric( $v ) ) $v = '"'.$v.'"';
-			$qfields[] = '`'.$k.'` = '.$v;
-		}
-		foreach( $case as $k => $v ) {
-			$qcase[] = '`'.$k.'` = "'.$v.'"';
-		}
-		$q = 'UPDATE `'.$table.'` SET '.implode( ', ', $qfields).' WHERE '.implode( ' AND ', $qcase );
-		$q = $this->pt->query( $q.';' );
-		return ( $q ) ? $this->pt->affected_rows : false;
+	public function upd( string $table, array $fields, array $filter ) {
+		$q = pg_update( $this->pt, $table, $fields, $filter, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
 	}
 
 }
