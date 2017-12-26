@@ -103,9 +103,9 @@ final class http {
 
 		$stack = explode( '/', $map[0] );
 		$map[0] = array_pop( $stack );
-		if ( $map[0] === '*' && $map[1] !== null ) throw new Exception( 'Sitemap error: Masked location must use no action: ' . $path );
+		if ( $map[0] === '*' && $map[1] !== null ) throw new Exception( 'Sitemap error: Masked location must use no action at <tt>' . $path . '</tt>. Use parent\'s <tt>__call()</tt> method instead' );
 		if ( empty( $map[2] ) ) {
-			if ( $map[1] === null ) throw new Exception( 'Sitemap error: Dead-end detected: ' . $path );
+			if ( $map[1] === null ) throw new Exception( 'Sitemap error: Dead-end detected at <tt>' . $path . '</tt>' );
 		} else {
 			$new = [];
 			foreach( $map[2] as &$map_nextlevel ) {

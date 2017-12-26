@@ -6,9 +6,9 @@ class pgsql extends \app\model implements _sql {
 	protected $rx = null;
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
-		
+
 		if ( ! extension_loaded( 'pgsql' ) ) throw new \Exception( 'PGSQL module not loaded' );
-		
+
 		$s = "options='--client_encoding=UTF8'";
 		if ( $host != '' ) $s .= ' host='.$host;
 		if ( $port != '' ) $s .= ' port='.$port;
@@ -28,6 +28,7 @@ class pgsql extends \app\model implements _sql {
 	}
 
 	public function select( string $table, array $fields, $filter = null, $sort = null ) {
+		if ( empty( $fields ) ) return false;
 
 		if ( is_array( $filter ) && ! empty( $filter ) ) {
 			$q = pg_select( $this->pt, $table, $filter, PGSQL_DML_STRING );
@@ -53,60 +54,67 @@ class pgsql extends \app\model implements _sql {
 			$q .= ' ORDER BY '.implode( ', ', $sort );
 		}
 		$this->rx = @pg_query( $this->pt, $q.';' );
-		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
+		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		return pg_num_rows( $this->rx );
 	}
-	
+
+	public function insert( string $table, array $keyval ) {
+		if ( empty( $keyval ) ) return false;
+
+		$q = pg_insert( $this->pt, $table, $keyval, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
+	}
+
+	public function update( string $table, array $keyval, array $filter ) {
+		if ( empty( $keyval ) || empty( $filter ) ) return false;
+
+		$q = pg_update( $this->pt, $table, $keyval, $filter, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
+	}
+
+	public function delete( string $table, array $filter ) {
+		if ( empty( $filter ) ) return false;
+
+		$q = pg_delete( $this->pt, $table, $filter, PGSQL_DML_STRING );
+		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+
+		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		$t = pg_affected_rows( $q );
+		pg_free_result( $q );
+		return $t;
+	}
+
 	public function fetch() {
-		if ( $this->rx ) {
-			return pg_fetch_row( $this->rx );
-		} else {
-			return false;
+		if ( $this->rx === null ) return false;
+
+		$t = pg_fetch_row( $this->rx );
+		if ( ! $t ) {
+			pg_free_result( $this->rx );
+			$this->rx = null;
 		}
+		return $t;
 	}
 
 	public function fetch_all() {
-		if ( $this->rx ) {
-			$fff = [];
-			while( $t = pg_fetch_row( $this->rx ) ) {
-				$fff[] = $t;
-			}
-			pg_free_result( $this->rx );
-			$this->rx = null;
-			return $fff;
-		} else {
-			return false;
+		if ( $this->rx === null ) return false;
+
+		$fff = [];
+		while( $t = pg_fetch_row( $this->rx ) ) {
+			$fff[] = $t;
 		}
-	}
-
-	public function put( string $table, array $fields ) {
-		$q = pg_insert( $this->pt, $table, $fields, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
-		
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
-		$t = pg_affected_rows( $q );
-		pg_free_result( $q );
-		return $t;
-	}
-
-	public function del( string $table, array $filter ) {
-		$q = pg_delete( $this->pt, $table, $filter, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
-		
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
-		$t = pg_affected_rows( $q );
-		pg_free_result( $q );
-		return $t;
-	}
-
-	public function upd( string $table, array $fields, array $filter ) {
-		$q = pg_update( $this->pt, $table, $fields, $filter, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
-		
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error() );
-		$t = pg_affected_rows( $q );
-		pg_free_result( $q );
-		return $t;
+		pg_free_result( $this->rx );
+		$this->rx = null;
+		return $fff;
 	}
 
 }
