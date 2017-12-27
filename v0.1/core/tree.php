@@ -17,7 +17,7 @@ class tree {
 	public function dive( $id ) {
 		if ( !isset( $this->pt[$id] ) ) return false;
 		$fff = false;
-		foreach ( $this->pt[$id][2] as $v ) { 
+		foreach ( $this->pt[$id][2] as $v ) {
 			$fff[$v[0]] = $v[3];
 		}
 		return $fff;

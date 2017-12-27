@@ -13,7 +13,7 @@ class mysql {
 		} else {
 			$host = '';
 		}
-		
+
 		$this->pt = new \mysqli( $host, $user, $pass, $base );
 
 		if ( ! $this->pt ) {
@@ -50,7 +50,7 @@ class mysql {
 		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
 		return $this->rx->num_rows;
 	}
-	
+
 	public function fetch() {
 		if ( $this->rx ) {
 			return $this->rx->fetch_row();
@@ -58,7 +58,7 @@ class mysql {
 			return false;
 		}
 	}
-	
+
 	public function fetch_all() {
 		$fff = [];
 		if ( $this->rx ) {
@@ -70,7 +70,7 @@ class mysql {
 		}
 		return $fff;
 	}
-	
+
 	public function raw( $q ) {
 		$this->rx = $this->pt->query( $q.';' );
 		if ( ! $this->rx ) throw new \Exception( 'DBA query error: '.$q.';' );
@@ -110,7 +110,7 @@ class mysql {
 		$q = $this->pt->query( $q.';' );
 		return ( $q ) ? $this->pt->affected_rows : false;
 	}
-	
+
 	protected function escape( &$item, &$key ) {
 		$item = preg_replace( '/[ ;\'"]/', '', $item );
 		$key = preg_replace( '/[ ;\'"]/', '', $key );

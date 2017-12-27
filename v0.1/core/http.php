@@ -1,17 +1,17 @@
 <?php
 
 final class http {
-	
+
 	private $path = '';
-	
+
 	public function __construct() {
-		
+
 		spl_autoload_register( [ $this, 'loader' ] );
 		try {
 			list( $tree, $action, $args ) = $this->follow();
 			$index = ( count( $args ) > 0 ) ? $args[0] : 'index';
 			if ( in_array( $index, SP_MAGIC ) ) $index = 'index';
-			
+
 			$cls = new ReflectionClass( '\\action\\'.$action );
 			if ( ! $cls->isSubclassOf( '\\action\\core' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
@@ -44,7 +44,7 @@ final class http {
 			$tree->add( $k, $v[0], [ 'path' => $v[1], 'ctl' => $v[2] ] );
 		}
 		$id = 0;
-		
+
 		$node = $tree->firstchild( $id );
 
 		$nice = '/';
@@ -105,7 +105,7 @@ final class http {
 
 class ERedirect extends \Exception {
 	private $url = null;
-	
+
 	public function __construct( $url = null ) {
 		parent::__construct();
 		$this->url = $url;

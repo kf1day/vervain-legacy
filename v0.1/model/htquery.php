@@ -1,9 +1,9 @@
 <?php namespace model;
 
 class htquery {
-	
+
 	private static function query( $uri, $method, $head = null, $data = null  ) {
-		
+
 		$head = ( $head && is_array( $head ) ) ? $head : [];
 		$data = ( $data && is_array( $data ) ) ? http_build_query( $data ) : '';
 
@@ -23,12 +23,12 @@ class htquery {
 				$opts['http']['header'] .= $k.': '.$v."\r\n";
 			}
 		}
-		
+
 //		print_r( $opts ); exit;
 		$context = stream_context_create( $opts );
 		return file_get_contents( $uri, false, $context );
 	}
-	
+
 	public static function json( $uri, $method, $head = null, $data = null ) {
 		$resp = self::query( $uri, $method, $head, $data );
 		return json_decode( $resp, true );

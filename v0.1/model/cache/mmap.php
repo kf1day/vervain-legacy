@@ -1,9 +1,9 @@
 <?php namespace model\cache;
 
 class mmap {
-	
+
 	protected $pt = null;
-	
+
 	public function __construct( $host, $port ) {
 		$this->pt = new \Memcached( APP_HASH );
 		if ( count( $this->pt->getServerList() ) === 0 ) {
@@ -12,11 +12,11 @@ class mmap {
 			echo 'memcached connection reused';*/
 		}
 	}
-	
+
 	public function set( $key, $val ) {
 		$this->pt->set( $key, $val );
 	}
-	
+
 	public function get( $key ) {
 		return $this->pt->get( $key );
 	}

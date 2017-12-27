@@ -1,7 +1,7 @@
 <?php namespace view;
 
 class includer extends core {
-	
+
 	const STRIP = 0x01;
 	const O_FT1 = 0x02;
 	const O_FT2 = 0x04;
@@ -10,11 +10,11 @@ class includer extends core {
 	const TYPE_HTML = 0x10;
 	const TYPE_XSLT = 0x20;
 	const TYPE_XML = 0x30;
-	
+
 	protected $type = 0x00;
 	protected $strip = false;
-	
-	
+
+
 	public function __construct( $tpl_path, $opts = null ) {
 		parent::__construct( $tpl_path );
 		if ( $opts !== null ) {
@@ -36,32 +36,32 @@ class includer extends core {
 				header( 'Content-Type: text/html; charset=utf-8' );
 				echo '<!DOCTYPE html>'.PHP_EOL;
 				break;
-			
+
 			case self::TYPE_XSLT:
 				header( 'Content-Type: application/xml; charset=utf-8' );
 				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
 /*				echo '<?xml-stylesheet type="text/xsl" href="'.$this->templates[0].'" ?>';	*/
 				break;
-				
+
 			case self::TYPE_XML:
 				header( 'Content-Type: text/xml; charset=utf-8' );
 				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
 				break;
-				
+
 			default:
 				header( 'Content-Type: text/plain; charset=utf-8' );
-				
+
 		}
 		while( $tpl = $this->fetch() ) {
 			include $tpl;
 		}
 		ob_end_flush();
 	}
-	
+
 	protected function closure( $buf ) {
 		$buf = preg_replace( '/<!--.*?-->|(?<=>)\s*[\r\n]+|[\r\n]+\s*(?=<)/s', '', $buf );
 //		$buf = preg_replace( '/\s{2,}|[\r\n]+/', ' ', $buf );
-		
+
 		return $buf;
 	}
 }
