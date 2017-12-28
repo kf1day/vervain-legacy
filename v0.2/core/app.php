@@ -51,10 +51,8 @@ abstract class view {
 
 
 abstract class action {
-	protected $tree = null;
-	protected $path = null;
-	public function __construct( $tree, $path ) {
-		$this->tree = $tree;
+	protected $path = '';
+	public function __construct( $path ) {
 		$this->path = $path;
 	}
 	public function index() {

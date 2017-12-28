@@ -2,26 +2,24 @@
 
 final class http {
 
-	private $path = '';
-
 	public function __construct() {
 
 		spl_autoload_register( [ $this, 'loader' ] );
+		$path = '';
 		try {
-			$action = $this->routing( $args );
-			if ( count( $args ) === 0 || ( $index = ltrim( $args[0], '_' ) ) === '' ) {
-				$index = 'index';
-			}
-			$cls = new ReflectionClass( '\\action\\'.$action );
+			list( $action, $index, $args ) = $this->routing( $path );
+			$cls = new ReflectionClass( '\\action\\' . $action );
 			if ( ! $cls->isSubclassOf( '\\app\\action' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
 			} elseif( $cls->hasMethod( $index ) ) {
-				array_shift( $args );
-				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( null, $this->path ), $args );
+				header( sprintf( 'X-Action: \\action\\%s::%s(%s)', $action, $index, implode( ', ', $args ) ) );;
+				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $path ), $args );
 			} elseif( $cls->hasMethod( '__call' ) ) {
-				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( null, $this->path ), $args );
+				array_unshift ( $args, $index );
+				header( sprintf( 'X-Action: \\action\\%s::__call(%s)', $action, implode( ', ', $args ) ) );;
+				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $path ), $args );
 			} else {
-				throw new EHttpClient( 404, null, 'Method "\\action\\'.$action.'->'.$index.'" not found!');
+				throw new EHttpClient( 404, null, 'Method "\\action\\' . $action . '->' . $index . '" not found!');
 			}
 		} catch( EHttpRedirect $e ) {
 			$e->set_root( $this->path );
@@ -34,18 +32,18 @@ final class http {
 		}
 	}
 
-	private function routing( &$args ) {
-		if ( ! is_file( APP_SITE.'/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
-		$map = require APP_SITE.'/sitemap.php';
+	private function routing( &$path ) {
+		if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
+		$map = require APP_SITE . '/sitemap.php';
 		$this->map_parse( $map );
 
-		$uri = $_SERVER['DOCUMENT_URI'];
+		$index = null;
 		$args = [];
 
 		$nice = '/';
 
 		$flag = false;
-		$node = strtok( $uri, '/' );
+		$node = strtok( $_SERVER['DOCUMENT_URI'], '/' );
 
 		if ( $map[0] !== '' ) {
 			$nice .= $map[0] . '/';
@@ -86,15 +84,24 @@ final class http {
 			throw new EHttpRedirect( $nice );
 		} else {
 			while( $node ) {
-				$args[] = $node;
+				if ( $index === null ) {
+					$index = $node;
+				} else {
+					$args[] = $node;
+				}
 				$node = strtok( '/' );
 			}
 		}
 
 		if ( ! $flag && $_SERVER['DOCUMENT_URI'] !== $nice ) throw new EHttpRedirect( $nice );
 
-		$this->path;
-		return $map[1];
+		$path = $nice;
+		if ( $index === null ) {
+			$index = 'index';
+		} else {
+			$index = ltrim( $index, '_' );
+		}
+		return [ $map[1], $index, $args ];
 	}
 
 	private function map_parse( &$map, $path = '' ) {
