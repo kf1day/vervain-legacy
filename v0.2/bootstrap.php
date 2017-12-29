@@ -12,6 +12,7 @@ define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
 define( 'APP_HASH', hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) ); // md4 is the fastest
 
 require APP_ROOT.'/core/app.php';
+require APP_ROOT.'/core/map.php';
 require APP_ROOT.'/core/http.php';
 
 new http();
