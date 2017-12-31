@@ -8,19 +8,20 @@ final class http {
 		$path = $_SERVER['DOCUMENT_URI'];
 		try {
 			$map = new map();
-			list( $action, $index, $args ) = $map->routing( $path );
+			list( $action, $method, $args ) = $map->routing( $path );
+//			printf( '<tt>\\action\\%s::%s(%s)</tt>', $action, $method, implode( ', ', $args ) ); exit;
 			$cls = new ReflectionClass( '\\action\\' . $action );
 			if ( ! $cls->isSubclassOf( '\\app\\action' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
-			} elseif( $cls->hasMethod( $index ) ) {
-				header( sprintf( 'X-Action: \\action\\%s::%s(%s)', $action, $index, implode( ', ', $args ) ) );
-				$cls->getMethod( $index )->invokeArgs( $cls->newInstance( $path ), $args );
+			} elseif( $cls->hasMethod( $method ) ) {
+				header( sprintf( 'X-Action: \\action\\%s::%s(%s)', $action, $method, implode( ', ', $args ) ) );
+				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 			} elseif( $cls->hasMethod( '__call' ) ) {
-				array_unshift ( $args, $index );
+				array_unshift ( $args, $method );
 				header( sprintf( 'X-Action: \\action\\%s::__call(%s)', $action, implode( ', ', $args ) ) );
-				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $path ), $args );
+				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 			} else {
-				throw new EHttpClient( 404, null, 'Method "\\action\\' . $action . '::' . $index . '" not found!' );
+				throw new EHttpClient( 404, null, 'Method "\\action\\' . $action . '::' . $method . '" not found!' );
 			}
 		} catch( EHttpRedirect $e ) {
 			$e->set_root( $path );

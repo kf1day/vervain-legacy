@@ -51,8 +51,10 @@ abstract class view {
 
 
 abstract class action {
+	protected $map;
 	protected $path = '';
-	public function __construct( $path ) {
+	public function __construct( $map, $path ) {
+		$this->map = $map;
 		$this->path = $path;
 	}
 	public function index() {
