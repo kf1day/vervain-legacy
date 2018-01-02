@@ -66,8 +66,8 @@ server {
 Здесь:
 * `паттерн` определяет одну или несколько секций URI, разделенных слешем.
 Символ `*` (звездочка) трактуется как любое значение секции.
-Паттерн для корневой ноды задает корневой URI для всего сайта.
-* `обработчик` задает способ обработки подходящего паттерна в виде `[класс]`<wbr>`[@метод]`<wbr>`[/аргумент1]`<wbr>`[/аргумент2]`<wbr>`[/аргументN]`.
+Паттерн для корневой ноды задает базовый URI для всего сайта.
+* `обработчик` задает способ обработки подходящего паттерна в виде<br>`[класс][@метод][/аргумент1][/аргумент2][/аргументN]`.
 Любая из частей (включая все одновременно) может быть опущена.
   * `класс` определяет название класса для передачи управления.
   В случае пропуска наследуется от вышестоящей ноды.
@@ -85,11 +85,24 @@ return [ '', null, [
     [ 'earth', 'class_earth', [
         [ 'countries', 'class_countries', [
 	    [ '*/flag', '@flag/small' ],
-	    [ '*/president', '' ],
+	    [ '*/leader', '' ],
 	    [ 'list', '@list' ],
 	]],
     ]],
-    [ 'mars', 'class_mars/history' ],
+    [ 'mars', 'class_mars/missions' ],
 ]];
-
 ```
+
+В такой схеме запрос к корню сайта `'/'` будет перенаправлен в `/mercury/` и далее обработан в `\action\class_mercury::index()`
+
+`/mercury/size/metric` будет обработан в `\action\class_mercury::size('metric')`
+
+`/venus/size/metric` будет обработан в `\action\class_venus::overview('size', 'metric')`
+
+`/earth/countries/list/` будет обработан в `\action\class_countries::list()`
+
+`/earth/countries/tongo` будет перенаправлен в `/earth/countries/tongo/flag` и обработан в `\action\class_countries::flag('small')`
+
+`/earth/countries/cuba/leader/che_guevara` будет обработан в `\action\class_countries::leader('che_guevara')`
+
+`/mars/current/curiosity` будет обработан в `\action\class_mars::current('missions', 'curiosity')`
