@@ -72,7 +72,7 @@ final class map {
 		}
 
 
-		if ( ! $flag && $path !== $nice ) throw new EHttpRedirect( $nice );
+		if ( ! $flag && $path !== $nice /* non-strict -> */ && $path . '/' !== $nice ) throw new EHttpRedirect( $nice );
 
 		$path = $nice;
 		if ( $method === null ) {
