@@ -65,19 +65,22 @@ server {
 
 `[ паттерн, обработчик, [ вложенная_нода_1, вложенная_нода_2, ... ] ]`.
 
-Здесь:
 * `паттерн` определяет одну или несколько секций URI, разделенных слешем.
 Символ `*` (звездочка) трактуется как любое значение секции.
 Паттерн для корневой ноды задает базовый URI для всего сайта.
-* `обработчик` задает способ обработки подходящего паттерна в виде<br>`[класс][@метод][/аргумент1][/аргумент2][/аргументN]`.
-Любая из частей (включая все одновременно) может быть опущена.
+* `обработчик` задает способ обработки подходящего паттерна в виде
+
+  `[класс][@метод][/аргумент1][/аргумент2][/аргументN]`
+
+  Любая из частей (включая все одновременно) может быть опущена.
+  Специальное значение `null` означает, что нода будет отмечена, как транзитная.
+  При обращении к такой ноде парсер сформирует переход к первой не-транзитной дочерней ноде.
   * `класс` определяет название класса для передачи управления.
   В случае пропуска наследуется от вышестоящей ноды.
   При невозможности наследования, дальнейшая обработка будет остановлена с ошибкой 
   * `метод` указывает явто используемый метод класса. В противном случае метод определяется дальнейшей обработкой URI
-  * `аргумент1..N` если заданы, будут переданы в метод первыми
-Обработчик может принимать значение `null`, в таком случае нода будет отмечена, как транзитная.
-При обращении к такой ноде парсер сформирует переход к первой не-транзитной дочерней ноде.
+  * `аргумент1..N` если заданы, будут переданы в метод до аргументов, определяемых дальнейшей обработкой URI
+
 
 #### *Пример sitemap.php*
 ```php
@@ -101,12 +104,12 @@ return [ '', null, [
 
 |URI|Обработчик
 |---|---
-|`/`|перенаправление в `/mercury/`
-|`/mercury/`|`\action\class_mercury::index()`
-|`/mercury/size/metric`|`\action\class_mercury::size('metric')`
-|`/venus/size/metric`|`\action\class_venus::overview('size', 'metric')`
-|`/earth/countries/list/`|`\action\class_countries::list()`
-|`/earth/countries/tongo`|перенаправление в `/earth/countries/tongo/flag/`
-|`/earth/countries/tongo/flag`|`\action\class_countries::flag('small')`
-|`/earth/countries/cuba/leader/che_guevara`|`\action\class_countries::leader('che_guevara')`
-|`/mars/current/curiosity`|`\action\class_mars::current('missions', 'curiosity')`
+|/|`/mercury/` (перенаправление)
+|/mercury/|`\action\class_mercury::index()`
+|/mercury/size/metric|`\action\class_mercury::size('metric')`
+|/venus/size/metric|`\action\class_venus::overview('size', 'metric')`
+|/earth/countries/list/|`\action\class_countries::list()`
+|/earth/countries/tongo|`/earth/countries/tongo/flag/` (перенаправление)
+|/earth/countries/tongo/flag|`\action\class_countries::flag('small')`
+|/earth/countries/cuba/leader/che_guevara|`\action\class_countries::leader('che_guevara')`
+|/mars/current/curiosity|`\action\class_mars::current('missions', 'curiosity')`
