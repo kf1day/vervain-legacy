@@ -6,17 +6,16 @@
   * Файл sitemap.php
 
 # Описание
-Vervain – мульти-сайтовый движок, который создавался в первую очередь для передачи управления классу (и методу), предопределенному картой сайта. При обработке запроса формируется две константы:
-* `APP_CORE` - определяется расположением `bootstrap.php` - путь для движка и базовых классов
-* `APP_SITE` - исходя из переданного сервером `DOCUMENT_ROOT` - корневой путь сайта. Относительно него выбираются пути для файлов конфигурации и пользовательских классов
+Vervain – мульти-сайтовый движок, который создавался в первую очередь для передачи управления классу (и методу), предопределенному картой сайта.
 
 # Настройка
 
 ## bootstrap.php
-Движок vervain автоматически осуществляет разбор URI, все запросы к динамическому контенту необходимо передавать на обработку в файл `<engine_version>/bootstrap.php`. 
+Движок vervain автоматически осуществляет разбор URI, все запросы к динамическому контенту необходимо передавать на обработку в файл
+`bootstrap.php` 
 
 ## Пример конфигурации сайта для nginx
-```
+```nginx
 server {
 
 	listen 80;
@@ -61,8 +60,11 @@ server {
 # Карта сайта
 ## sitemap.php
 Файл `sitemap.php` должен находится в корневой директории сайта.
-Файл содержит возврашаемый массив, состоящий из корневой ноды и вложенных в нее (при необходимости) одной или нескольких дочерних. Глубина вложенности нод не ограничена.
-Формат каждой ноды следующий: `[ паттерн, обработчик, [ вложенная_нода_1, вложенная_нода_2, ... ] ]`.
+Файл содержит возвращаемый массив, состоящий из корневой ноды и вложенных в нее (при необходимости) одной или нескольких дочерних. Глубина вложенности нод не ограничена.
+Формат каждой ноды следующий:
+
+`[ паттерн, обработчик, [ вложенная_нода_1, вложенная_нода_2, ... ] ]`.
+
 Здесь:
 * `паттерн` определяет одну или несколько секций URI, разделенных слешем.
 Символ `*` (звездочка) трактуется как любое значение секции.
@@ -78,14 +80,16 @@ server {
 При обращении к такой ноде парсер сформирует переход к первой не-транзитной дочерней ноде.
 
 ### Примеры sitemap.php
-```
+```php
 return [ '', null, [
     [ 'mercury', 'class_mercury' ],
     [ 'venus', 'class_venus@overview' ],
     [ 'earth', 'class_earth', [
         [ 'countries', 'class_countries', [
-	    [ '*/flag', '@flag/small' ],
-	    [ '*/leader', '' ],
+	    [ '*', null, [
+	        [ 'flag', '@flag/small' ],
+	        [ 'leader', '' ],
+	    ]],
 	    [ 'list', '@list' ],
 	]],
     ]],
@@ -93,16 +97,16 @@ return [ '', null, [
 ]];
 ```
 
-В такой схеме запрос к корню сайта `'/'` будет перенаправлен в `/mercury/` и далее обработан в `\action\class_mercury::index()`
+При таком сетапе:
 
-`/mercury/size/metric` будет обработан в `\action\class_mercury::size('metric')`
-
-`/venus/size/metric` будет обработан в `\action\class_venus::overview('size', 'metric')`
-
-`/earth/countries/list/` будет обработан в `\action\class_countries::list()`
-
-`/earth/countries/tongo` будет перенаправлен в `/earth/countries/tongo/flag` и обработан в `\action\class_countries::flag('small')`
-
-`/earth/countries/cuba/leader/che_guevara` будет обработан в `\action\class_countries::leader('che_guevara')`
-
-`/mars/current/curiosity` будет обработан в `\action\class_mars::current('missions', 'curiosity')`
+|URI|обработчик
+|---|---
+|`/`|перенаправление в `/mercury/`
+|`/mercury/`|`\action\class_mercury::index()`
+|`/mercury/size/metric`|`\action\class_mercury::size('metric')`
+|`/venus/size/metric`|`\action\class_venus::overview('size', 'metric')`
+|`/earth/countries/list/`|`\action\class_countries::list()`
+|`/earth/countries/tongo`|перенаправление в `/earth/countries/tongo/flag/`
+|`/earth/countries/tongo/flag`|`\action\class_countries::flag('small')`
+|`/earth/countries/cuba/leader/che_guevara`|`\action\class_countries::leader('che_guevara')`
+|`/mars/current/curiosity`|`\action\class_mars::current('missions', 'curiosity')`
