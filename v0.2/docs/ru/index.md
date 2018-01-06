@@ -111,34 +111,34 @@ array( 'паттерн', 'обработчик' [, array( $node1, $node2, ... ) 
 ### <a id="sitemap-internal-parsing">Внутреннее приведение</a>
 Парсер разбивает много-сегментные паттерны на дерево одно-сегментных:
 ```php
-[ '', 'root_node', [
-    [ 'foo/bar/baz', 'some_action' ],
+[ '', 'root_class', [
+    [ 'foo/bar/baz', 'baz_class' ],
 ]]
 ```
 внутренне приводится к 
 ```php
-[ '', 'root_node', [
+[ '', 'root_class', [
     [ 'foo', null, [
         [ 'bar', null, [
-            [ 'baz', 'some_action' ],
+            [ 'baz', 'baz_class' ],
         ]],
     ]],
 ]]
 ```
 Таким образом, промежуточные сегменты паттерна приводятся к транзитным нодам, если они не описаны ранее или далее:
 ```php
-[ '', 'root_node', [
-    [ 'foo', 'foo_action' ],
-    [ 'foo/bar/baz', 'some_action' ],
-    [ 'foo/bar', 'bar_action' ],
+[ '', 'root_class', [
+    [ 'foo', 'foo_class' ],
+    [ 'foo/bar/baz', 'baz_class' ],
+    [ 'foo/bar', 'foo_class' ],
 ]]
 ```
 внутренне приводится к 
 ```php
-[ '', 'root_node', [
-    [ 'foo', 'foo_action', [
-        [ 'bar', 'bar_action' , [
-    	    [ 'baz', 'some_action' ],
+[ '', 'root_class', [
+    [ 'foo', 'foo_class', [
+        [ 'bar', 'bar_class' , [
+    	    [ 'baz', 'baz_class' ],
         ]],
     ]],
 ]]
@@ -149,15 +149,15 @@ array( 'паттерн', 'обработчик' [, array( $node1, $node2, ... ) 
 Наследование имени класса производится до разбиения, поэтому в случае
 ```php
 [ '', 'root_class', [
-    [ 'sub', 'sub_class' ],
-    [ 'sub/foo', '@foo' ],
+    [ 'foo', 'foo_class' ],
+    [ 'foo/bar', '@bar' ],
 ]]
 ```
 `foo` унаследует класс `root_class`, который является родительским до анализа паттерна:
 ```php
 [ '', 'root_class', [
-    [ 'sub', 'sub_class', [
-        [ 'foo', 'root_class@foo' ],
+    [ 'foo', 'foo_class', [
+        [ 'bar', 'root_class@bar' ],
     ]],
 ]]
 ```
