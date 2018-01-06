@@ -49,11 +49,10 @@ abstract class view {
 	abstract public function display( $vars = null );
 }
 
-
 abstract class action {
 	protected $map;
 	protected $path = '';
-	public function __construct( $map, $path ) {
+	final public function __construct( \map $map, string $path ) {
 		$this->map = $map;
 		$this->path = $path;
 	}

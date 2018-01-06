@@ -5,7 +5,7 @@ final class map {
 	private $pt = null;
 
 	public function __construct() {
-		if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new Exception( 'Sitemap not found' );
+		if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new ESiteMap( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
 		$this->pt = require APP_SITE . '/sitemap.php';
 		$this->parse( $this->pt );
 		$this->merge( $this->pt );
@@ -88,7 +88,7 @@ final class map {
 	}
 
 	private function parse( &$map, $path = '', $action = null ) {
-		if ( ! is_string( $map[0] ) ) throw new Exception( 'Sitemap error: Invalid pattern at <tt style="color:darkred">' . $path . '</tt>' );
+		if ( ! is_string( $map[0] ) ) throw new ESiteMap( 'Invalid pattern', $path . '/&lt;unknown&gt;', 'Pattern must be a string' );
 		$map = [ trim( $map[0], '/' ), $map[1] ?? null, null, null, $map[2] ?? null ];
 		if ( $map[0] !== '' ) $path .= '/' . $map[0];
 		$stack = explode( '/', $map[0] );
@@ -101,12 +101,13 @@ final class map {
 			$map[1] = array_shift( $map[3] );
 			$t = explode( '@', $map[1] );
 			$map[1] = ( $t[0] === '' ) ? $action : $t[0];
+			if ( $map[1] === null ) throw new ESiteMap( 'Failed to inherit classname', $path, 'Specify a classname directly'  );
 			$map[2] = ( empty( $t[1] ) ) ? null : $t[1];
 		} else {
 			$map[1] = null;
 		}
 		if ( $map[4] === null ) {
-			if ( $map[1] === null ) throw new Exception( 'Sitemap error: Dead-end detected at <tt style="color:darkred">' . $path . '</tt>' );
+			if ( $map[1] === null ) throw new ESiteMap( 'Dead-end', $path, 'Specify or inherit a classname' );
 		} else {
 			foreach( $map[4] as &$map_child ) {
 				$this->parse( $map_child, $path, $map[1] );
@@ -128,7 +129,7 @@ final class map {
 					if ( $uniq[$id][1] === null ) {
 						list( $uniq[$id][1], $uniq[$id][2], $uniq[$id][3] ) = [ $map_child[1], $map_child[2], $map_child[3] ];
 					} elseif ( $map_child[1] !== null ) {
-						throw new Exception( 'Sitemap error: Duplicated node detected at <tt style="color:darkred">' . $path . '/' . $uniq[$id][0] . '</tt>' );
+						throw new ESiteMap( 'Duplicated node detected ', $path . '/' . $uniq[$id][0], 'Remove or rename the duplicate node' );
 					}
 					if ( $map_child[4] && $uniq[$id][4] ) {
 						$uniq[$id][4] = array_merge( $uniq[$id][4], $map_child[4] );
@@ -149,5 +150,12 @@ final class map {
 				$this->merge( $map_child, $path );
 			}
 		}
+	}
+}
+
+class ESiteMap extends Exception {
+	
+	public function __construct( $type, $path, $hint = '' ) {
+		parent::__construct( sprintf( '<b>Sitemap error:</b> %s at <tt style="color:darkred">%s</tt><br><i>%s</i>', $type, $path, $hint ) );
 	}
 }
