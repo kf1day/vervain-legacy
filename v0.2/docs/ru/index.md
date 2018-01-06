@@ -47,10 +47,10 @@ server {
 	}
 
 	location / {
-		try_files $uri @baduri;
+		try_files $uri @vervain;
 	}
  
-	location @baduri {
+	location @vervain {
 		fastcgi_param SCRIPT_FILENAME /var/www/vervain/v0.2/bootstrap.php;
 		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
 		include fastcgi_params;
