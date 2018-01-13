@@ -8,7 +8,7 @@ if ( isset( $_SERVER['DEBUG'] ) ) {
 }
 
 define( 'APP_ROOT', dirname( __FILE__ ) );
-define( 'APP_SITE', $_SERVER['DOCUMENT_ROOT'] );
+define( 'APP_SITE', rtrim( $_SERVER['DOCUMENT_ROOT'], '/' ) );
 define( 'APP_HASH', hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) ); // md4 is the fastest
 
 require APP_ROOT.'/core/app.php';

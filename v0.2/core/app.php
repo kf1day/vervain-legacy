@@ -19,7 +19,7 @@ abstract class view {
 		$this->display( $vars );
 	}
 
-	public function load( $template ) {
+	public function load() {
 		$template = func_get_args();
 		foreach( $template as $tmp ) {
 			if ( is_string( $tmp ) ) {
