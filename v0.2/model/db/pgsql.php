@@ -17,9 +17,7 @@ class pgsql extends \app\model implements _sql {
 		if ( $pass != '' ) $s .= ' password='.$pass;
 		$this->pt = @pg_pconnect( $s );
 
-		if ( ! $this->pt ) {
-			throw new \Exception( 'PGSQL connection failed' );
-		}
+		if ( ! $this->pt ) throw new \Exception( 'PGSQL connection failed' );
 	}
 
 	public function get( string $table, array $fields, $filter = null, $sort = null ) {

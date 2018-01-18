@@ -9,19 +9,11 @@ class mysql extends \app\model implements _sql {
 
 		if ( ! extension_loaded( 'mysqli' ) ) throw new \Exception( 'MySQLi module not loaded' );
 
-		if ( $host && $port ) {
-			$host .= ':'.$port;
-		} else {
-			$host = '';
-		}
-
+		$host = ( is_string( $host ) ) ? $host . ( $port ? ':' . $port : '' ) : '';
 		$this->pt = mysqli_connect( $host, $user, $pass, $base );
+		if ( ! $this->pt ) throw new \Exception( 'MySQL connection failed' );
 
-		if ( ! $this->pt ) {
-			throw new \Exception( 'MySQL connection failed' );
-		} else {
-			mysqli_query( $this->pt, 'SET NAMES UTF8' );
-		}
+		mysqli_query( $this->pt, 'SET NAMES UTF8' );
 	}
 
 	public function get( string $table, array $fields, $filter = null, $sort = null ) {

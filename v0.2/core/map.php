@@ -154,7 +154,7 @@ final class map {
 }
 
 class ESiteMap extends Exception {
-	
+
 	public function __construct( $type, $path, $hint = '' ) {
 		parent::__construct( sprintf( '<b>Sitemap error:</b> %s at <tt style="color:darkred">%s</tt><br><i>%s</i>', $type, $path, $hint ) );
 	}

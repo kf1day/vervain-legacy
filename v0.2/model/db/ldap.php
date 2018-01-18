@@ -1,87 +1,120 @@
 <?php namespace model\db;
 
-class ldap extends \app\model {
+class ldap extends \app\model implements _sql {
 
-	protected $pt = false;
-	protected $rx = false;
-	protected $rz = [];
+	protected $pt = null;	// $link_identifier
+	protected $ax = null;	// queried fields
+	protected $rx = null;	// $result_identifier
+	protected $el = null;	// $result_entry_identifier
 	protected $root = '';
 
 	public function __construct( $host, $port, $base, $user, $pass ) {
 
-		$port = ( $port ) ? ':'.$port : '';
-		$this->pt = ldap_connect( 'ldap://'.$host.$port.'/' );
+		if ( ! extension_loaded( 'ldap' ) ) throw new \Exception( 'LDAP module not loaded' );
+
+		$this->pt = ( $port ) ? ldap_connect( $host, $port ) : ldap_connect( $host );
+		if ( ! $this->pt ) throw new \Exception( 'Incorrect LDAP settings' );
+
 		ldap_set_option( $this->pt, LDAP_OPT_PROTOCOL_VERSION, 3 );
 		ldap_set_option( $this->pt, LDAP_OPT_REFERRALS, 0 );
 
-		if ( ! @ldap_bind( $this->pt, $user, $pass ) ) {
-				throw new \Exception( 'DBA connection failed' );
-		}
+		if ( ! @ldap_bind( $this->pt, $user, $pass ) ) throw new \Exception( 'LDAP connection failed' );
 		$this->root = $base;
 	}
 
-	public function get( $table, $fields, $filter, $order = null ) {
-		$root = $table ?? $this->root;
+	public function get( string $table, array $fields, $filter = null, $sort = null ) {
+		$this->select( $table, $fields, $filter, $sort );
+		return $this->fetch_all();
+	}
+
+	public function select( string $table, array $fields, $filter = null, $sort = null ) {
+		$root = ( $table === '' ) ? $this->root : $table . ',' . $this->root;
 		$filt = '';
 		foreach ( $filter as $k => $v ) {
 			$filt .= '('.$k.'='.$v.')';
 		}
-		if ( count( $filter > 1 ) ) $filt = '(&'.$filt.')';
-		if ( $s = ldap_search( $this->pt, $root, $filt, $fields ) ) {
-			$this->rx = ldap_first_entry( $this->pt, $s );
-			$this->rz = $fields;
-			return ldap_count_entries( $this->pt, $s );
+		$this->el = null;
+		if ( count( $filter ) > 1 ) $filt = '(&'.$filt.')';
+		if ( $this->rx = ldap_search( $this->pt, $root, $filt, $fields ) ) {
+			$this->ax = $fields;
+			return ldap_count_entries( $this->pt, $this->rx );
+		} else {
+			$this->ax = $this->rx = null;
+			return false;
 		}
-		$this->rz = [];
-		return false;
 	}
+
+	public function insert( string $table, array $keyval ) {}
+	public function update( string $table, array $keyval, array $filter ){}
+	public function delete( string $table, array $filter ){}
 
 	public function fetch( &$dn = null ) {
-		if ( ! $this->rx ) return false;
-		$ret = [];
-		foreach( $this->rz as $k => $v ) {
-			$tmp =  ldap_get_values( $this->pt, $this->rx, $v );
-			$tmp = $tmp[0] ?? null;
-			if ( $tmp ) {
-				if ( strtolower( $v ) == 'objectsid' ) {
-					$ret[$k] = $this->bin2sid( $tmp );
-					continue;
-				}
-				if ( ! mb_check_encoding( $tmp ) ) {
-					$tmp = bin2hex( $tmp );
-				}
-			}
-			$ret[$k] = $tmp;
+		if ( $this->rx === null ) return false;
+		$this->el = ( $this->el === null ) ? ldap_first_entry( $this->pt, $this->rx ) : ldap_next_entry( $this->pt, $this->el );
+		if ( $this->el === false ) {
+			ldap_free_result ( $this->rx );
+			$this->el = $this->ax = $this->rx = null;
+			return false;
 		}
-		$dn = ldap_get_dn( $this->pt, $this->rx );
-		$this->rx = ldap_next_entry( $this->pt, $this->rx );
-		return $ret;
-	}
 
+		$fff = $this->ax;
+		foreach( $fff as &$key ) {
+			$t = ( $key === 'dn' ) ? ldap_get_dn( $this->pt, $this->el ) : ldap_get_values( $this->pt, $this->el, $key );
+			$this->xvalue( $key, $t );
+		}
+		return $fff;
+	}
 
 	public function fetch_all() {
-		$ret = [];
-		while ( $tmp = $this->fetch() ) {
-			$ret[] = $tmp;
+		if ( $this->rx === null ) return false;
+		$t = ldap_get_entries( $this->pt, $this->rx );
+		$fff = [];
+		ldap_free_result( $this->rx );
+		for( $i = 0; $i < $t['count']; $i++ ) {
+			$u = $this->ax;
+			foreach( $u as &$key ) {
+				$this->xvalue( $key, $t[$i][strtolower($key)] ?? false );
+			}
+			$fff[$t[$i]['dn']] = $u;
 		}
-		return $ret;
+		$this->el = $this->ax = $this->rx = null;
+		return $fff;
 	}
 
-
-	protected function bin2sid ( $b ) {
-		$s = 'S-';
-		$r = '';
-		$h = str_split( bin2hex( $b ), 2 );
-		$s .= hexdec( $h[0] ).'-'.hexdec( $h[2].$h[3].$h[4].$h[5].$h[6].$h[7] );
-		for ( $i = 0; $i < hexdec( $h[1] ); $i++ ) {
-			$v = 8 + ( 4 * $i );
-			if ( $i < 4 ) {
-				$s .= "-".hexdec( $h[$v+3].$h[$v+2].$h[$v+1].$h[$v] );
-			} else {
-				$r .= hexdec( $h[$v+3].$h[$v+2].$h[$v+1].$h[$v] );
+	protected function xvalue( &$key, $val ) {
+		if ( $val === false ) {
+			$key = null;
+		} else {
+			switch ( strtolower( $key ) ) {
+				case 'dn':
+					$key = $val;
+					break;
+				case 'objectsid':
+					$key = $this->bin2sid( $val[0] );
+					break;
+				case 'objectguid':
+					$key = $this->bin2guid( $val[0] );
+					break;
+				default:
+					if ( $val['count'] === 1 ) {
+						$key = mb_check_encoding( $val[0] ) ? $val[0] : bin2hex( $val[0] ) ;
+					} else {
+						unset( $val['count'] );
+						$key = $val;
+					}
 			}
 		}
-		return [ $s, $r ];
+	}
+
+	protected function bin2sid( $b ) {
+		$u = unpack( 'Ca/X/Jb/V*c', $b );
+		$u['b'] &= 0xffffffffffff; // need last 48 bytes from uint64 (Jb)
+		return 'S-' . implode( '-', $u );
+	}
+
+	protected function bin2guid( $b ) {
+		$u = unpack( 'Va/v2b/n2c/Nd', $b );
+		return sprintf( '%08X-%04X-%04X-%04X-%04X%08X', $u['a'], $u['b1'], $u['b2'], $u['c1'], $u['c2'], $u['d'] );
 	}
 
 
