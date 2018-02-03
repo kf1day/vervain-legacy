@@ -1,6 +1,6 @@
 <?php namespace model\cache;
 
-class memcached implements \ArrayAccess {
+class cMemcached implements \ArrayAccess {
 
 	protected $pt = [];
 	protected $sv = null;

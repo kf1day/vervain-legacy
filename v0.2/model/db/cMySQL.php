@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class mysql extends \app\model implements _sql {
+class cMySQL extends \app\cModel implements iSQL {
 
 	protected $pt = null;
 	protected $rx = null;

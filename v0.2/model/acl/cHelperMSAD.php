@@ -1,8 +1,8 @@
 <?php namespace model\acl;
 
-class helper_msad extends \model\db\ldap implements _helper {
+class cHelperMSAD extends \model\db\cLDAP implements iHelper {
 
-	public function acl_get( string $uid ) {
+	public function acl_get( string $uid ): rHelper {
 		$filter = [
 			'objectClass' => 'user',
 			'objectCategory' => 'person',
@@ -18,8 +18,9 @@ class helper_msad extends \model\db\ldap implements _helper {
 			$groups[] = $r[0];
 		}
 
-
-		return [ $t[1], $t[2], $groups ];
+		$ret = new rHelper;
+		list( $ret->name, $ret->secret, $ret->groups ) = [ $t[1], $t[2], $groups ];
+		return $ret;
 
 	}
 }

@@ -1,6 +1,6 @@
 <?php namespace model;
 
-class vurl extends \app\model {
+class cVURL extends \app\cModel {
 
 	const METHODS = [
 		'GET',

@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-class ldap extends \app\model implements _sql {
+class cLDAP extends \app\cModel implements iSQL {
 
 	protected $pt = null;	// $link_identifier
 	protected $ax = null;	// queried fields

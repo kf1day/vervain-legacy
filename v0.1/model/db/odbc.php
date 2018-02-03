@@ -54,7 +54,7 @@ class odbc {
 	public function fetch_all() {
 		$fff = [];
 		if ( $this->rx ) {
-			while( $fff[] = array_values( odbc_fetch_array( $this->rx ) );
+			while( $fff[] = array_values( odbc_fetch_array( $this->rx ) ) );
 		} else {
 			return false;
 		}

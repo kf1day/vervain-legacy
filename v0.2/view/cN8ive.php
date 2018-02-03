@@ -1,6 +1,6 @@
 <?php namespace view;
 
-class n8ive extends \app\view {
+class cN8ive extends \app\cView {
 
 	const STRIP = 0x01;
 	const O_FT1 = 0x02;

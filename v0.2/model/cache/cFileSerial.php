@@ -1,14 +1,15 @@
 <?php namespace model\cache;
+use \model\cFileSystem as fs;
 
-class fserial implements \ArrayAccess {
+class cFileSerial implements \ArrayAccess {
 
 	protected $pt = [];
 	protected $ig = false;
 
 	public function __construct() {
 		if (  extension_loaded( 'igbinary' ) ) $this->ig = true;
-		\model\fs::md( APP_ROOT . '/cache/' . APP_HASH );
-		$tmp = \model\fs::rf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $this->ig );
+		fs::md( APP_ROOT . '/cache/' . APP_HASH );
+		$tmp = fs::rf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $this->ig );
 		if ( $tmp !== false ) {
 			$tmp = ( $this->ig ) ? igbinary_unserialize( $tmp ) : unserialize( $tmp );
 		}
@@ -17,7 +18,7 @@ class fserial implements \ArrayAccess {
 
 	public function __destruct() {
 		$tmp = ( $this->ig ) ? igbinary_serialize( $this->pt ) : serialize( $this->pt );
-		\model\fs::wf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $tmp, $this->ig );
+		fs::wf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $tmp, $this->ig );
 	}
 
 	// interface methods

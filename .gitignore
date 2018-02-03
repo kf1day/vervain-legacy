@@ -1,2 +1,3 @@
+.vs*
 /sites/*
-!/sites/_skel
+!/sites/demo

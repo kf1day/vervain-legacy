@@ -1,14 +1,14 @@
 <?php namespace model\acl;
 
-class http extends \app\model {
+class cAuth extends \app\cModel {
 
 	protected $cw = null;		// cacher
-	protected $pt = null;		// array of helpers: instanceof _helper
+	protected $pt = null;		// array of helpers: instanceof iHelper
 	protected $ui = [];			// user info
 
 
 
-	public function __construct( $cacher, $helper ) {
+	public function __construct( $cacher, iHelper $helper ) {
 		$this->cw = $cacher;
 		$this->pt = $helper;
 	}
@@ -22,8 +22,8 @@ class http extends \app\model {
 				return;
 			} elseif ( $t = $this->pt->acl_get( $u ) ) {
 				$t = $this->pt->acl_get( $u );
-				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
-				$this->cache['acl'][$uid] = $t;
+				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
+				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
 			}
 			throw new \EHttpClient( 403 );
@@ -36,10 +36,10 @@ class http extends \app\model {
 			if ( ! $ignore_cache && $t = $this->cache['acl'][$uid] ?? false and $this->keyring( $t[1], $hash ) ) { // have cache + cache is valid
 				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
 				return;
-			} elseif( $u = $this->usrcode( $uid, 1 ) and $t = $this->pt->acl_get( $u ) and $this->keyring( $t[1], $hash ) ) {// search ldap
+			} elseif( $u = $this->usrcode( $uid, 1 ) and $t = $this->pt->acl_get( $u ) and $this->keyring( $t->secret, $hash ) ) {// search ldap
 				$u = $this->usrcode( $uid, 1 );
-				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
-				$this->cache['acl'][$uid] = $t;
+				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
+				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
 			}
 		}

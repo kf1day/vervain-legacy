@@ -1,6 +1,6 @@
 <?php namespace model\db;
 
-interface _sql {
+interface iSQL {
 
 	public function get( string $table, array $fields, $filter = null, $sort = null );
 	public function select( string $table, array $fields, $filter = null, $sort = null );

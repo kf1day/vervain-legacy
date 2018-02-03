@@ -11,7 +11,7 @@ final class http {
 			list( $action, $method, $args ) = $map->routing( $path );
 //			printf( '<tt>\\action\\%s::%s(%s)</tt>', $action, $method, implode( ', ', $args ) ); exit;
 			$cls = new ReflectionClass( '\\action\\' . $action );
-			if ( ! $cls->isSubclassOf( '\\app\\action' ) ) {
+			if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
 				throw new Exception( 'Class in not an ACTION' );
 			} elseif( $cls->hasMethod( $method ) ) {
 				header( sprintf( 'X-Action: \\action\\%s::%s(%s)', $action, $method, implode( ', ', $args ) ) );

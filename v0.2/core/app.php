@@ -1,11 +1,11 @@
 <?php namespace app;
 
-abstract class model {
+abstract class cModel {
 	/* Is there any common methods 4 all models? May be this class is just useless */
 }
 
 
-abstract class view {
+abstract class cView {
 	protected $tpl_path = '';
 	protected $tpl_list = [];
 	protected $tpl_next = null;
@@ -49,7 +49,7 @@ abstract class view {
 	abstract public function display( $vars = null );
 }
 
-abstract class action {
+abstract class cAction {
 	protected $map;
 	protected $path = '';
 	final public function __construct( \map $map, string $path ) {

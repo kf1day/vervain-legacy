@@ -1,6 +1,6 @@
 <?php namespace model;
 
-class fs {
+class cFileSystem {
 
 	// make dir
 	static public function md( $path ) {

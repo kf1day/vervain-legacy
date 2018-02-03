@@ -1,6 +1,6 @@
 <?php namespace view;
 
-class json extends \app\view {
+class cJSON extends \app\cView {
 
 	public function display( $vars = null ) {
 		header( 'Content-Type: text/json; charset=utf-8' );

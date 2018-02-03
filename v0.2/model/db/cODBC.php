@@ -1,6 +1,6 @@
 <?php
 
-class odbc extends \app\model {
+class cODBC extends \app\cModel implements iSQL {
 
 	protected $pt = null;
 	protected $rx = null;
@@ -54,7 +54,7 @@ class odbc extends \app\model {
 	public function fetch_all() {
 		$fff = [];
 		if ( $this->rx ) {
-			while( $fff[] = array_values( odbc_fetch_array( $this->rx ) );
+			while( $fff[] = array_values( odbc_fetch_array( $this->rx ) ) );
 		} else {
 			return false;
 		}
