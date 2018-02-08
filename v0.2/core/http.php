@@ -1,45 +1,48 @@
 <?php
 
-final class http {
+final class instance {
 
 	public function __construct() {
 
 		spl_autoload_register( [ $this, 'loader' ] );
 		$path = $_SERVER['DOCUMENT_URI'];
+		$cls = null;
 		try {
 			$map = new map();
 			list( $action, $method, $args ) = $map->routing( $path );
-//			printf( '<tt>\\action\\%s::%s(%s)</tt>', $action, $method, implode( ', ', $args ) ); exit;
 			$cls = new ReflectionClass( '\\action\\' . $action );
 			if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
-				throw new Exception( 'Class in not an ACTION' );
+				throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
 			} elseif( $cls->hasMethod( $method ) ) {
-				header( sprintf( 'X-Action: \\action\\%s::%s(%s)', $action, $method, implode( ', ', $args ) ) );
 				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $map, $path ), $args );
-			} elseif( $cls->hasMethod( '__call' ) ) {
-				array_unshift ( $args, $method );
-				header( sprintf( 'X-Action: \\action\\%s::__call(%s)', $action, implode( ', ', $args ) ) );
-				$cls->getMethod( '__call' )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 			} else {
-				throw new EHttpClient( 404, null, 'Method "\\action\\' . $action . '::' . $method . '" not found!' );
+				throw new EHttpClient( 404, sprintf( 'Method "\\action\\%s::%s" not found!', $action, $method ) );
 			}
 		} catch( EHttpRedirect $e ) {
-			$e->set_root( $path );
-			$e->process();
+			$e->follow();
 		} catch( EHttpClient $e ) {
-			$e->process();
+			if ( $cls === null ) {
+				$cls = new ReflectionClass( '\\action\\__default' );
+				if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
+					http_response_code( 500 );
+					echo 'Class "\\action\\__default" must be instance of "\\app\\cAction"';
+					return;
+				}
+			}
+			$args = [ $e->getCode(), $e->getMessage() ];
+			$cls->getMethod( '__error' )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 		} catch( Exception $e ) {
-			echo $e->GetMessage();
 			http_response_code( 500 );
+			echo $e->getMessage();
 		}
 	}
 
 	private function loader( $classname ) {
 		$classname = str_replace( '\\', '/', $classname );
-		if ( is_file( APP_SITE.'/'.$classname.'.php' ) ) {
-			include APP_SITE.'/'.$classname.'.php';
-		} elseif ( is_file( APP_ROOT.'/'.$classname.'.php' ) ) {
-			include APP_ROOT.'/'.$classname.'.php';
+		if ( is_file( APP_SITE . '/' . $classname . '.php' ) ) {
+			include APP_SITE . '/' . $classname . '.php';
+		} elseif ( is_file( APP_ROOT . '/' . $classname . '.php' ) ) {
+			include APP_ROOT . '/' . $classname . '.php';
 		}
 	}
 }
@@ -51,17 +54,14 @@ class EHttpRedirect extends Exception {
 		parent::__construct();
 		$this->url = $url;
 	}
-	public function set_root( $root_uri ) {
-		$this->uri = preg_replace( '/^\~/', $root_uri, $this->url );
-	}
-	public function process() {
+
+	public function follow() {
 		$scheme = 'http';
-		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' ) $scheme = 'https';
+		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ) $scheme = 'https';
 		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
 		$host = $_SERVER['SERVER_NAME'];
 		if ( ! in_array( $scheme . $_SERVER['SERVER_PORT'], [ 'http80', 'https443' ] ) ) $host .= ':' . $_SERVER['SERVER_PORT'];
 		header( 'Location: ' . $scheme . '://' . $host . $this->url, true, 302 ); // absolute path required due to RFC
-		exit;
 	}
 }
 
@@ -76,24 +76,10 @@ class EHttpClient extends Exception {
 		409 => 'Conflict',
 	];
 
-	protected $code = 400;
-	protected $headers = null;
-	protected $body = '';
-
-	public function __construct( $code, $headers = null, $body = '' ) {
-		$this->code = ( self::HTTP_STATUS[$code] ?? false ) ? $code : 400;
-		$this->headers = ( is_array( $headers ) ) ? $headers : [];
-		$this->body = $body;
-		parent::__construct( self::HTTP_STATUS[$this->code] );
+	public function __construct( $code, $body = null ) {
+		if ( ! isset( self::HTTP_STATUS[$code] ) ) $code = 400;
+		if ( $body === null ) $body = self::HTTP_STATUS[$code];
+		parent::__construct( $body, $code );
 	}
 
-
-	public function process(){
-		foreach ( $this->headers as $k => $v ) {
-			header( $k.': '.$v );
-		}
-		new \error\http( $this->code, $this->body );
-//		http_response_code( $this->code );
-//		echo $this->body;
-	}
 }

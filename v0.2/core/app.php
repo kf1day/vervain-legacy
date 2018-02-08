@@ -12,7 +12,7 @@ abstract class cView {
 
 	public function __construct( $tpl_path = '' ) {
 		$this->tpl_path = ( $tpl_path == '' ) ? APP_SITE : APP_SITE.'/'.trim( $tpl_path, '/' );
-		if ( ! is_dir( $this->tpl_path ) ) throw new \Exception( 'Template directory is unreadable: '.$this->tpl_path );
+		if ( ! is_dir( $this->tpl_path ) ) throw new \Exception( sprintf( 'Template directory is unreadable: "%s"', $this->tpl_path ) );
 	}
 
 	final public function __invoke( $vars = null ) {
@@ -26,7 +26,7 @@ abstract class cView {
 				if ( is_file( $this->tpl_path.'/'.$tmp ) ) {
 					$this->tpl_list[] = $tmp;
 				} else {
-					throw new \Exception( 'Template is not found: '.$this->tpl_path.'/'.$tmp );
+					throw new \Exception( sprintf( 'Template is not found: "%s/%s"', $this->tpl_path, $tmp ) );
 				}
 			}
 		}
@@ -55,8 +55,19 @@ abstract class cAction {
 	final public function __construct( \map $map, string $path ) {
 		$this->map = $map;
 		$this->path = $path;
+		$this->__onload();
 	}
+
 	public function index() {
 		echo 'default $class->index()';
+	}
+
+	public function __onload() {
+	}
+
+	public function __error( $code, $body = '' ) {
+		if ( 407 < $code || $code <  401 ) $code = 500;
+		http_response_code( $code );
+		echo $body;
 	}
 }

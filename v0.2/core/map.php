@@ -9,7 +9,6 @@ final class map {
 		$this->pt = require APP_SITE . '/sitemap.php';
 		$this->parse( $this->pt );
 		$this->merge( $this->pt );
-//		echo '<pre>'; print_r( $this->pt ); echo '</pre>'; exit;
 	}
 
 	public function routing( &$path ) {
@@ -156,6 +155,6 @@ final class map {
 class ESiteMap extends Exception {
 
 	public function __construct( $type, $path, $hint = '' ) {
-		parent::__construct( sprintf( '<b>Sitemap error:</b> %s at <tt style="color:darkred">%s</tt><br><i>%s</i>', $type, $path, $hint ) );
+		parent::__construct( sprintf( 'Sitemap error: %s at "%s". %s', $type, $path, $hint ) );
 	}
 }
