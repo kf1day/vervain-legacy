@@ -19,7 +19,7 @@ class cN8ive extends \app\cView {
 		parent::__construct( $tpl_path );
 		if ( $opts !== null ) {
 			if ( $opts & self::STRIP ) $this->strip = true;
-			if ( $opts & 0xf0 ) $this->type = $opts & 0xf0;
+			$this->type = $opts & 0xf0;
 		}
 	}
 
@@ -40,7 +40,6 @@ class cN8ive extends \app\cView {
 			case self::TYPE_XSLT:
 				header( 'Content-Type: application/xml; charset=utf-8' );
 				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
-/*				echo '<?xml-stylesheet type="text/xsl" href="'.$this->templates[0].'" ?>';	*/
 				break;
 
 			case self::TYPE_XML:
@@ -60,8 +59,6 @@ class cN8ive extends \app\cView {
 
 	protected function closure( $buf ) {
 		$buf = preg_replace( '/<!--.*?-->|(?<=>)\s*[\r\n]+|[\r\n]+\s*(?=<)/s', '', $buf );
-//		$buf = preg_replace( '/\s{2,}|[\r\n]+/', ' ', $buf );
-
 		return $buf;
 	}
 }

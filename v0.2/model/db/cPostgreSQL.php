@@ -28,17 +28,16 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 	public function select( string $table, array $fields, $filter = null, $sort = null ) {
 		if ( empty( $fields ) ) return false;
 
+		$q = sprintf( 'SELECT "%s" FROM "%s"', implode( '", "', $fields ), $table );
 		if ( is_array( $filter ) && ! empty( $filter ) ) {
-			$q = pg_select( $this->pt, $table, $filter, PGSQL_DML_STRING );
-			$q = rtrim( $q, ';' );
-			$t = explode( '*', $q, 2 );
-			$q = sprintf( '%s "%s" %s', $t[0], implode( '", "', $fields ), $t[1] );
-		} else {
-			$q = sprintf( 'SELECT "%s" FROM "%s"', implode( '", "', $fields ), $table );
+			$filter = pg_convert( $this->pt, $table, $filter );
+			foreach( $filter as $k => &$v ) {
+				$v = $k . ' = ' . $v ;
+			}
+			$q .= ' WHERE ' . implode( ' AND ', $filter );
 		}
 
 		if ( ( is_array( $sort ) && ! empty( $sort ) ) ) {
-
 			foreach( $sort as &$v ) {
 				$t = ltrim( $v, '+-' );
 				if ( $v[0] === '+' ) {
@@ -49,8 +48,9 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 					$v = '"' . $t . '"';
 				}
 			}
-			$q .= ' ORDER BY '.implode( ', ', $sort );
+			$q .= ' ORDER BY ' . implode( ', ', $sort );
 		}
+
 		$this->rx = @pg_query( $this->pt, $q.';' );
 		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		return pg_num_rows( $this->rx );

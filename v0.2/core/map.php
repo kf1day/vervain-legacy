@@ -87,11 +87,14 @@ final class map {
 	}
 
 	private function parse( &$map, $path = '', $action = null ) {
-		if ( ! is_string( $map[0] ) ) throw new ESiteMap( 'Invalid pattern', $path . '/&lt;unknown&gt;', 'Pattern must be a string' );
-		$map = [ trim( $map[0], '/' ), $map[1] ?? null, null, null, $map[2] ?? null ];
-		if ( $map[0] !== '' ) $path .= '/' . $map[0];
-		$stack = explode( '/', $map[0] );
-		$map[0] = array_pop( $stack );
+		if ( is_string( $map[0] ) ) {
+			$map = [ trim( $map[0], '/' ), $map[1] ?? null, null, null, $map[2] ?? null ];
+			if ( $map[0] !== '' ) $path .= '/' . $map[0];
+			$stack = explode( '/', $map[0] );
+			$map[0] = array_pop( $stack );
+		} else {
+			throw new ESiteMap( 'Invalid pattern (after)', $path, 'Pattern must be a string' );
+		}
 
 		if ( $map[1] === '' ) {
 			$map[1] = $action;
