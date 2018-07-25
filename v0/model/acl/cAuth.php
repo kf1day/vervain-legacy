@@ -20,8 +20,7 @@ class cAuth extends \app\cModel {
 			if ( ! $ignore_cache && $t = $this->cache['acl'][$uid] ?? false ) {
 				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
 				return;
-			} elseif ( $t = $this->pt->acl_get( $u ) ) {
-				$t = $this->pt->acl_get( $u );
+			} elseif ( $t = $this->pt->get_user( $u ) ) {
 				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
 				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
@@ -36,7 +35,7 @@ class cAuth extends \app\cModel {
 			if ( ! $ignore_cache && $t = $this->cache['acl'][$uid] ?? false and $this->keyring( $t[1], $hash ) ) { // have cache + cache is valid
 				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
 				return;
-			} elseif( $u = $this->usrcode( $uid, 1 ) and $t = $this->pt->acl_get( $u ) and $this->keyring( $t->secret, $hash ) ) {// search ldap
+			} elseif( $u = $this->usrcode( $uid, 1 ) and $t = $this->pt->get_user( $u ) and $this->keyring( $t->secret, $hash ) ) {// search ldap
 				$u = $this->usrcode( $uid, 1 );
 				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
 				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];

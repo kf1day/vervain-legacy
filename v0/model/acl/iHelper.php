@@ -9,6 +9,6 @@ class rHelper {
 
 interface iHelper {
 
-	public function acl_get( string $uid ): rHelper; // [ name, secret, groups ]
+	public function get_user( string $uid ): rHelper; // [ name, secret, groups ]
 
 }
