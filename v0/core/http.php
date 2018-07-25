@@ -14,9 +14,10 @@ final class instance {
 			if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
 				throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
 			} elseif( $cls->hasMethod( $method ) ) {
+				if ( OPT_DEBUG ) header( sprintf( 'X-Trace-Instance: \\%s::%s(%s)', $cls->getName(), $method, implode( ', ', $args ) ) );
 				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 			} else {
-				throw new EHttpClient( 404, sprintf( 'Method "\\action\\%s::%s" not found!', $action, $method ) );
+				throw new EHttpClient( 404, sprintf( 'Method "\\%s::%s" not found!', $cls->getName(), $method ) );
 			}
 		} catch( EHttpRedirect $e ) {
 			$e->follow();
@@ -30,6 +31,7 @@ final class instance {
 				}
 			}
 			$args = [ $e->getCode(), $e->getMessage() ];
+			if ( OPT_DEBUG ) header( sprintf( 'X-Trace-Instance: \\%s::__onerror(%s)', $cls->getName(), implode( ', ', $args ) ) );
 			$cls->getMethod( '__onerror' )->invokeArgs( $cls->newInstance( $map, $path ), $args );
 		} catch( Exception $e ) {
 			http_response_code( 500 );
