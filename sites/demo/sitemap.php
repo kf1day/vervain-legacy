@@ -1,13 +1,6 @@
 <?php
 
-/*
-	ID => [
-		Parent ( 1: '/' ),
-		Path,
-		Action: empty assumed folder
-		Option
-	]
-*/
+// [action][@method][/arg1][/arg2]...[/argN]
 
 return [
 

@@ -5,6 +5,7 @@ class cFileSerial implements \ArrayAccess {
 
 	protected $pt = [];
 	protected $ig = false;
+	protected $changed = false;
 
 	public function __construct() {
 		if (  extension_loaded( 'igbinary' ) ) $this->ig = true;
@@ -17,8 +18,10 @@ class cFileSerial implements \ArrayAccess {
 	}
 
 	public function __destruct() {
-		$tmp = ( $this->ig ) ? igbinary_serialize( $this->pt ) : serialize( $this->pt );
-		fs::wf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $tmp, $this->ig );
+		if ( $this->changed )  {
+			$tmp = ( $this->ig ) ? igbinary_serialize( $this->pt ) : serialize( $this->pt );
+			fs::wf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $tmp, $this->ig );
+		}
 	}
 
 	// interface methods
@@ -31,10 +34,12 @@ class cFileSerial implements \ArrayAccess {
 	}
 
 	public function offsetSet( $offset, $value ) {
+		$this->changed = true;
 		$this->pt[$offset] = $value;
 	}
 
 	public function offsetUnset( $offset ) {
+		$this->changed = true;
 		unset( $this->pt[$offset] );
 	}
 
