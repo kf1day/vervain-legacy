@@ -8,14 +8,18 @@ final class instance {
 		$path = $_SERVER['DOCUMENT_URI'];
 		$cls = null;
 		try {
-			$map = new map();
+			$cls = new ReflectionClass( OPT_CACHE );
+			$cache = $cls->newInstanceArgs( OPT_CACHE_ARGS );
+			$cls = null;
+
+			$map = new map( $cache );
 			list( $action, $method, $args ) = $map->routing( $path );
 			$cls = new ReflectionClass( '\\action\\' . $action );
 			if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
 				throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
 			} elseif( $cls->hasMethod( $method ) ) {
 				if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::%s(%s)', $cls->getName(), $method, implode( ', ', $args ) ), false );
-				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $map, $path ), $args );
+				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $cache, $path ), $args );
 			} else {
 				throw new EHttpClient( 404, sprintf( 'Method "\\%s::%s" not found!', $cls->getName(), $method ) );
 			}
@@ -32,7 +36,7 @@ final class instance {
 			}
 			$args = [ $e->getCode(), $e->getMessage() ];
 			if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::__onerror(%s)', $cls->getName(), implode( ', ', $args ) ), false );
-			$cls->getMethod( '__onerror' )->invokeArgs( $cls->newInstance( $map, $path ), $args );
+			$cls->getMethod( '__onerror' )->invokeArgs( $cls->newInstance( $cache, $path ), $args );
 		} catch( Exception $e ) {
 			http_response_code( 500 );
 			echo $e->getMessage();

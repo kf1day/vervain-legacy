@@ -50,10 +50,10 @@ abstract class cView {
 }
 
 abstract class cAction {
-	protected $map;
+	protected $cache;
 	protected $path = '';
-	final public function __construct( \map $map, string $path ) {
-		$this->map = $map;
+	final public function __construct( $cache, string $path ) {
+		$this->cache = $cache;
 		$this->path = $path;
 		$this->__onload();
 	}

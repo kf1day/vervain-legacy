@@ -4,11 +4,17 @@ final class map {
 
 	private $pt = null;
 
-	public function __construct() {
-		if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new ESiteMap( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
-		$this->pt = require APP_SITE . '/sitemap.php';
-		$this->parse( $this->pt );
-		$this->merge( $this->pt );
+	public function __construct( $cache ) {
+		if ( isset( $cache['sitemap'] ) ) {
+			$this->pt = $cache['sitemap'];
+
+		} else {
+			if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new ESiteMap( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
+			$this->pt = require APP_SITE . '/sitemap.php';
+			$this->parse( $this->pt );
+			$this->merge( $this->pt );
+			$cache['sitemap'] = $this->pt;
+		}
 	}
 
 	public function routing( &$path ) {
