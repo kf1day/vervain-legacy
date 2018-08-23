@@ -7,14 +7,16 @@ class cMemcached implements \ArrayAccess {
 
 	public function __construct( $host, $port = 0 ) {
 
+//		var_dump( $host, $port ); exit;
+
 		if ( extension_loaded( 'memcached' ) ) {
 			$this->sv = new \Memcached( APP_HASH );
 			if ( empty( $this->sv->getServerList() ) ) {
 				$this->sv->addServer( $host, $port );
 			}
 		} elseif ( extension_loaded( 'memcache' ) ){
-			if ( $port === 0 ) {
-				$this->sv = memcache_pconnect( 'unix://' .$host, 0 );
+			if ( $port == 0 ) {
+				$this->sv = memcache_pconnect( 'unix://' . $host, 0 );
 			} else {
 				$this->sv = memcache_pconnect( $host, $port );
 			}
@@ -34,7 +36,7 @@ class cMemcached implements \ArrayAccess {
 
 	// interface methods
 	public function offsetExists( $offset ) {
-		return isset( $this->pt[$offset] ) || $this->sv->touch( $offset );
+		return isset( $this->pt[$offset] ) || ( $this->sv->get( $offset ) !== false );
 	}
 
 	public function &offsetGet( $offset ) {
