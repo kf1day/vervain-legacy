@@ -1,10 +1,15 @@
 <?php namespace view;
 
+/**
+	ADOPTER FOR https://github.com/bzick/fenom.git
+*/
+
+
 require '/var/www/fenom/src/Fenom.php';
 
 class cFenom extends \app\cView {
 
-	protected $pt = false;
+	protected $pt = null;
 
 	public function __construct( $tpl_path, $options ) {
 		parent::__construct( $tpl_path );

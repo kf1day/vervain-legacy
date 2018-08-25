@@ -23,7 +23,7 @@ if ( isset( $_SERVER['VERVAIN_CACHE'] ) ) {
 
 define( 'APP_ROOT', dirname( __FILE__ ) );
 define( 'APP_SITE', rtrim( $_SERVER['DOCUMENT_ROOT'], '/' ) );
-define( 'APP_HASH', hash( 'md4', $_SERVER['DOCUMENT_ROOT'] ) ); // md4 is the fastest
+define( 'APP_HASH', basename( APP_SITE ) . '-' . substr( md5( APP_SITE ), 0, 6 ) );
 
 require APP_ROOT.'/core/app.php';
 require APP_ROOT.'/core/map.php';

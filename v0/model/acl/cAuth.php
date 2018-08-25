@@ -25,7 +25,7 @@ class cAuth extends \app\cModel {
 				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
 			}
-			throw new \EHttpClient( 403 );
+			throw new \EClientError( 403 );
 		}
 		throw new Exception( 'Failed to fetch authorized user' );
 	}
@@ -42,7 +42,7 @@ class cAuth extends \app\cModel {
 				return;
 			}
 		}
-		throw new \EHttpClient( 403 );
+		throw new \EClientError( 403 );
 	}
 
 	public function get() {

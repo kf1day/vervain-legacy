@@ -6,37 +6,42 @@ final class instance {
 
 		spl_autoload_register( [ $this, 'loader' ] );
 		$path = $_SERVER['DOCUMENT_URI'];
+		$ref = null;
 		$cls = null;
+
+		$onload = true;
+
 		try {
-			$cls = new ReflectionClass( OPT_CACHE );
-			$cache = $cls->newInstanceArgs( OPT_CACHE_ARGS );
-			$cls = null;
+			$ref = new ReflectionClass( OPT_CACHE );
+			$cache = $ref->newInstanceArgs( OPT_CACHE_ARGS );
+			$ref = null;
 
 			$map = new map( $cache );
-			list( $action, $method, $args ) = $map->routing( $path );
-			$cls = new ReflectionClass( '\\action\\' . $action );
-			if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
+			try {
+				list( $action, $method, $args ) = $map->routing( $path );
+			} catch( EClientError $e ) {
+				$action = '__default';
+				$method = '__onerror';
+				$args = [ $e->getCode(), $e->getMessage() ];
+				$onload = false;
+			}
+			$ref = new ReflectionClass( '\\action\\' . $action );
+			if ( ! $ref->isSubclassOf( '\\app\\cAction' ) ) {
 				throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
-			} elseif( $cls->hasMethod( $method ) ) {
-				if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::%s(%s)', $cls->getName(), $method, implode( ', ', $args ) ), false );
-				$cls->getMethod( $method )->invokeArgs( $cls->newInstance( $cache, $path ), $args );
+			} elseif( $ref->hasMethod( $method ) ) {
+				if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::%s(%s)', $ref->getName(), $method, implode( ', ', $args ) ), false );
+				$cls = $ref->newInstance( $cache, $path );
+				if ( $onload ) $ref->getMethod( '__onload' )->invoke( $cls );
+				$ref->getMethod( $method )->invokeArgs( $cls, $args );
 			} else {
-				throw new EHttpClient( 404, sprintf( 'Method "\\%s::%s" not found!', $cls->getName(), $method ) );
+				throw new EClientError( 404, sprintf( 'Method "\\%s::%s" not found!', $ref->getName(), $method ) );
 			}
-		} catch( EHttpRedirect $e ) {
+		} catch( ERedirect $e ) {
 			$e->follow();
-		} catch( EHttpClient $e ) {
-			if ( $cls === null ) {
-				$cls = new ReflectionClass( '\\action\\__default' );
-				if ( ! $cls->isSubclassOf( '\\app\\cAction' ) ) {
-					http_response_code( 500 );
-					echo 'Class "\\action\\__default" must be instance of "\\app\\cAction"';
-					return;
-				}
-			}
+		} catch( EClientError $e ) {
 			$args = [ $e->getCode(), $e->getMessage() ];
-			if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::__onerror(%s)', $cls->getName(), implode( ', ', $args ) ), false );
-			$cls->getMethod( '__onerror' )->invokeArgs( $cls->newInstance( $cache, $path ), $args );
+			if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::__onerror(%s)', $ref->getName(), implode( ', ', $args ) ), false );
+			$ref->getMethod( '__onerror' )->invokeArgs( $cls, $args );
 		} catch( Exception $e ) {
 			http_response_code( 500 );
 			echo $e->getMessage();
@@ -53,7 +58,7 @@ final class instance {
 	}
 }
 
-class EHttpRedirect extends Exception {
+class ERedirect extends Exception {
 	private $url = null;
 
 	public function __construct( $url = null ) {
@@ -71,7 +76,7 @@ class EHttpRedirect extends Exception {
 	}
 }
 
-class EHttpClient extends Exception {
+class EClientError extends Exception {
 
 	const HTTP_STATUS = [
 		400 => 'Bad Request',
@@ -87,5 +92,4 @@ class EHttpClient extends Exception {
 		if ( $body === null ) $body = self::HTTP_STATUS[$code];
 		parent::__construct( $body, $code );
 	}
-
 }

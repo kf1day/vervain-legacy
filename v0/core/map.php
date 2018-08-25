@@ -9,7 +9,7 @@ final class map {
 			$this->pt = $cache['sitemap'];
 
 		} else {
-			if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new ESiteMap( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
+			if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new EMapParser( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
 			$this->pt = require APP_SITE . '/sitemap.php';
 			$this->parse( $this->pt );
 			$this->merge( $this->pt );
@@ -57,13 +57,13 @@ final class map {
 		}
 
 		if ( $map[1] === null ) {
-			if ( $flag ) throw new EHttpClient( 404 );
+			if ( $flag ) throw new EClientError( 404 );
 			while( $map[1] === null ) {
 				$map = reset( $map[4] );
-				if ( $map[0] === '*' ) throw new EHttpClient( 404 );
+				if ( $map[0] === '*' ) throw new EClientError( 404 );
 				$nice .= $map[0] . '/';
 			}
-			throw new EHttpRedirect( $nice );
+			throw new ERedirect( $nice );
 		}
 
 		$method = $map[2];
@@ -77,7 +77,7 @@ final class map {
 		}
 
 
-		if ( ! $flag && $path !== $nice /* non-strict -> */ && $path . '/' !== $nice ) throw new EHttpRedirect( $nice );
+		if ( ! ( $flag || in_array( $nice, [ $path,  $path . '/' ] ) ) ) throw new ERedirect( $nice );
 
 		$path = $nice;
 		if ( $method === null ) {
@@ -99,7 +99,7 @@ final class map {
 			$stack = explode( '/', $map[0] );
 			$map[0] = array_pop( $stack );
 		} else {
-			throw new ESiteMap( 'Invalid pattern (after)', $path, 'Pattern must be a string' );
+			throw new EMapParser( 'Invalid pattern (after)', $path, 'Pattern must be a string' );
 		}
 
 		if ( $map[1] === '' ) {
@@ -109,13 +109,13 @@ final class map {
 			$map[1] = array_shift( $map[3] );
 			$t = explode( '@', $map[1] );
 			$map[1] = ( $t[0] === '' ) ? $action : $t[0];
-			if ( $map[1] === null ) throw new ESiteMap( 'Failed to inherit classname', $path, 'Specify a classname directly'  );
+			if ( $map[1] === null ) throw new EMapParser( 'Failed to inherit classname', $path, 'Specify a classname directly'  );
 			$map[2] = ( empty( $t[1] ) ) ? null : $t[1];
 		} else {
 			$map[1] = null;
 		}
 		if ( $map[4] === null ) {
-			if ( $map[1] === null ) throw new ESiteMap( 'Dead-end', $path, 'Specify or inherit a classname' );
+			if ( $map[1] === null ) throw new EMapParser( 'Dead-end', $path, 'Specify or inherit a classname' );
 		} else {
 			foreach( $map[4] as &$map_child ) {
 				$this->parse( $map_child, $path, $map[1] );
@@ -137,7 +137,7 @@ final class map {
 					if ( $uniq[$id][1] === null ) {
 						list( $uniq[$id][1], $uniq[$id][2], $uniq[$id][3] ) = [ $map_child[1], $map_child[2], $map_child[3] ];
 					} elseif ( $map_child[1] !== null ) {
-						throw new ESiteMap( 'Duplicated node detected ', $path . '/' . $uniq[$id][0], 'Remove or rename the duplicate node' );
+						throw new EMapParser( 'Duplicated node detected ', $path . '/' . $uniq[$id][0], 'Remove or rename the duplicate node' );
 					}
 					if ( $map_child[4] && $uniq[$id][4] ) {
 						$uniq[$id][4] = array_merge( $uniq[$id][4], $map_child[4] );
@@ -161,7 +161,7 @@ final class map {
 	}
 }
 
-class ESiteMap extends Exception {
+class EMapParser extends Exception {
 
 	public function __construct( $type, $path, $hint = '' ) {
 		parent::__construct( sprintf( 'Sitemap error: %s at "%s". %s', $type, $path, $hint ) );

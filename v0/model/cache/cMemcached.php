@@ -7,8 +7,6 @@ class cMemcached implements \ArrayAccess {
 
 	public function __construct( $host, $port = 0 ) {
 
-//		var_dump( $host, $port ); exit;
-
 		if ( extension_loaded( 'memcached' ) ) {
 			$this->sv = new \Memcached( APP_HASH );
 			if ( empty( $this->sv->getServerList() ) ) {
@@ -56,4 +54,4 @@ class cMemcached implements \ArrayAccess {
 		$this->sv->delete( $offset );
 	}
 
-	}
+}

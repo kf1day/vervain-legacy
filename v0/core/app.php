@@ -50,12 +50,11 @@ abstract class cView {
 }
 
 abstract class cAction {
-	protected $cache;
-	protected $path = '';
+	protected $app_cache = null;
+	protected $app_path = '';
 	final public function __construct( $cache, string $path ) {
-		$this->cache = $cache;
-		$this->path = $path;
-		$this->__onload();
+		$this->app_cache = $cache;
+		$this->app_path = $path;
 	}
 
 	public function index() {
