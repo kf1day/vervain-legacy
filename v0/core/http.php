@@ -37,7 +37,7 @@ final class instance {
 				throw new EClientError( 404, sprintf( 'Method "\\%s::%s" not found!', $ref->getName(), $method ) );
 			}
 		} catch( ERedirect $e ) {
-			$e->follow();
+			$e();
 		} catch( EClientError $e ) {
 			$args = [ $e->getCode(), $e->getMessage() ];
 			if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::__onerror(%s)', $ref->getName(), implode( ', ', $args ) ), false );
@@ -66,7 +66,7 @@ class ERedirect extends Exception {
 		$this->url = $url;
 	}
 
-	public function follow() {
+	public function __invoke() {
 		$scheme = 'http';
 		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ) $scheme = 'https';
 		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) $scheme = $_SERVER['REQUEST_SCHEME'];
