@@ -17,12 +17,12 @@ class cAuth extends \app\cModel {
 		if ( $u = $_SERVER['PHP_AUTH_USER'] ?? false ) {
 			$u = strtolower( $u );
 			$uid = $this->usrcode( $u );
-			if ( ! $ignore_cache && $t = $this->cache['acl'][$uid] ?? false ) {
+			if ( ! $ignore_cache && $t = $this->cw['acl'][$uid] ?? false ) {
 				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
 				return;
 			} elseif ( $t = $this->pt->get_user( $u ) ) {
 				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
-				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
+				$this->cw['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
 			}
 			throw new \EClientError( 403 );
@@ -32,13 +32,13 @@ class cAuth extends \app\cModel {
 
 	public function auth_cookie( bool $ignore_cache = false ) {
 		if ( $uid = $_COOKIE['UID'] ?? false and $hash = $_COOKIE['HASH'] ?? false ) {
-			if ( ! $ignore_cache && $t = $this->cache['acl'][$uid] ?? false and $this->keyring( $t[1], $hash ) ) { // have cache + cache is valid
+			if ( ! $ignore_cache && $t = $this->cw['acl'][$uid] ?? false and $this->keyring( $t[1], $hash ) ) { // have cache + cache is valid
 				$this->ui = [ 'uid' => $uid, 'name' => $t[0], 'secret' => $t[1], 'groups' => $t[2] ];
 				return;
 			} elseif( $u = $this->usrcode( $uid, 1 ) and $t = $this->pt->get_user( $u ) and $this->keyring( $t->secret, $hash ) ) {// search ldap
 				$u = $this->usrcode( $uid, 1 );
 				$this->ui = [ 'uid' => $uid, 'name' => $t->name, 'secret' => $t->secret, 'groups' => $t->groups ];
-				$this->cache['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
+				$this->cw['acl'][$uid] = [ $t->name, $t->secret, $t->groups ];
 				return;
 			}
 		}
