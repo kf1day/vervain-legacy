@@ -4,16 +4,16 @@ final class map {
 
 	private $pt = null;
 
-	const LOAD = APP_SITE . '/sitemap.php';
+	const PATH = APP_SITE . '/sitemap.php';
 
 	public function __construct( $cache ) {
-		if ( ! is_file( self::LOAD ) ) throw new EMapParser( 'File not found', APP_SITE . self::LOAD, 'Check the file is existing and readable' );
+		if ( ! is_file( self::PATH ) ) throw new EMapParser( 'File not found', APP_SITE . self::PATH, 'Check the file is existing and readable' );
 		$this->pt = $cache->get( 'sitemap', function() {
-			$this->pt = require self::LOAD;
+			$this->pt = require self::PATH;
 			$this->parse( $this->pt );
 			$this->merge( $this->pt );
 			return $this->pt;
-		}, [], filemtime( self::LOAD ) );
+		}, [], filemtime( self::PATH ) );
 	}
 
 	public function routing( &$path ) {
