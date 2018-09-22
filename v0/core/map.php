@@ -4,19 +4,16 @@ final class map {
 
 	private $pt = null;
 
+	const LOAD = APP_SITE . '/sitemap.php';
+
 	public function __construct( $cache ) {
-		if ( ! is_file( APP_SITE . '/sitemap.php' ) ) throw new EMapParser( 'File not found', APP_SITE . '/sitemap.php', 'Check the file is existing and readable' );
-
-		if ( isset( $cache['sitemap'] ) && isset( $cache['sitemap_timestamp'] ) && $cache['sitemap_timestamp'] === filemtime( APP_SITE . '/sitemap.php' ) ) {
-			$this->pt = $cache['sitemap'];
-
-		} else {
-			$this->pt = require APP_SITE . '/sitemap.php';
+		if ( ! is_file( self::LOAD ) ) throw new EMapParser( 'File not found', APP_SITE . self::LOAD, 'Check the file is existing and readable' );
+		$this->pt = $cache->get( 'sitemap', function() {
+			$this->pt = require self::LOAD;
 			$this->parse( $this->pt );
 			$this->merge( $this->pt );
-			$cache['sitemap'] = $this->pt;
-			$cache['sitemap_timestamp'] = filemtime( APP_SITE . '/sitemap.php' );
-		}
+			return $this->pt;
+		}, [], filemtime( self::LOAD ) );
 	}
 
 	public function routing( &$path ) {

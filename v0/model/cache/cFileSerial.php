@@ -1,16 +1,18 @@
 <?php namespace model\cache;
 use \model\cFileSystem as fs;
 
-class cFileSerial implements \ArrayAccess {
+class cFileSerial implements iCacher {
 
 	protected $pt = [];
 	protected $ig = false;
 	protected $changed = false;
 
+	const PATH = APP_ROOT . '/cache/' . APP_HASH;
+
 	public function __construct() {
 		if (  extension_loaded( 'igbinary' ) ) $this->ig = true;
-		fs::md( APP_ROOT . '/cache/' . APP_HASH );
-		$tmp = fs::rf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $this->ig );
+		fs::md( static::PATH );
+		$tmp = fs::rf( static::PATH . '/__fserial__', $this->ig );
 		if ( $tmp !== false ) {
 			$tmp = ( $this->ig ) ? igbinary_unserialize( $tmp ) : unserialize( $tmp );
 		}
@@ -20,27 +22,24 @@ class cFileSerial implements \ArrayAccess {
 	public function __destruct() {
 		if ( $this->changed )  {
 			$tmp = ( $this->ig ) ? igbinary_serialize( $this->pt ) : serialize( $this->pt );
-			fs::wf( APP_ROOT . '/cache/' . APP_HASH . '/__fserial__', $tmp, $this->ig );
+			fs::wf( static::PATH . '/__fserial__', $tmp, $this->ig );
 		}
 	}
 
 	// interface methods
-	public function offsetExists( $offset ) {
-		return isset( $this->pt[$offset] );
+	public function get( string $key, callable $callback, array $args = [], $version = null ) {
+		if ( isset( $this->pt[$key] ) ) {
+			return $this->pt[$key];
+		} else {
+			$fff = call_user_func_array( $callback, $args );
+			$this->set( $key, $fff );
+			return $fff;
+		}
+
 	}
 
-	public function &offsetGet( $offset ) {
-		return $this->pt[$offset];
-	}
-
-	public function offsetSet( $offset, $value ) {
+	public function set( string $key, $value, $version = null ) {
 		$this->changed = true;
-		$this->pt[$offset] = $value;
+		$this->pt[$key] = $value;
 	}
-
-	public function offsetUnset( $offset ) {
-		$this->changed = true;
-		unset( $this->pt[$offset] );
-	}
-
 }

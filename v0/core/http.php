@@ -6,14 +6,23 @@ final class instance {
 
 		spl_autoload_register( [ $this, 'loader' ] );
 		$path = $_SERVER['DOCUMENT_URI'];
+		$cvar = $_SERVER['VERVAIN_CACHE'] ?? null;
+		if ( $cvar === null ) {
+			$cvar = OPT_DEFAULT_CACHE;
+			$cvar_args = OPT_DEFAULT_CACHE_ARGS;
+		} else {
+			$cvar_args = $_SERVER['VERVAIN_CACHE_ARGS'] ?? '';
+			$cvar_args = explode( ',', $cvar_args );
+		}
 		$ref = null;
 		$cls = null;
 
 		$onload = true;
 
 		try {
-			$ref = new ReflectionClass( OPT_CACHE );
-			$cache = $ref->newInstanceArgs( OPT_CACHE_ARGS );
+			$ref = new ReflectionClass( $cvar );
+			if ( ! $ref->isSubclassOf( '\\model\\cache\\iCacher' ) ) throw new Exception( sprintf( 'Class "%s" must implement "\\model\\cache\\iCacher"', $cvar ) );
+			$cache = $ref->newInstanceArgs( $cvar_args );
 			$ref = null;
 
 			$map = new map( $cache );
@@ -26,21 +35,17 @@ final class instance {
 				$onload = false;
 			}
 			$ref = new ReflectionClass( '\\action\\' . $action );
-			if ( ! $ref->isSubclassOf( '\\app\\cAction' ) ) {
-				throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
-			} elseif( $ref->hasMethod( $method ) ) {
-				if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::%s(%s)', $ref->getName(), $method, implode( ', ', $args ) ), false );
-				$cls = $ref->newInstance( $cache, $path );
-				if ( $onload ) $ref->getMethod( '__onload' )->invoke( $cls );
-				$ref->getMethod( $method )->invokeArgs( $cls, $args );
-			} else {
-				throw new EClientError( 404, sprintf( 'Method "\\%s::%s" not found!', $ref->getName(), $method ) );
-			}
+			if ( ! $ref->isSubclassOf( '\\app\\cAction' ) ) throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
+
+			$cls = $ref->newInstance( $cache, $path );
+			if ( $onload ) $ref->getMethod( '__onload' )->invoke( $cls );
+			if( ! $ref->hasMethod( $method ) ) throw new EClientError( 404, sprintf( 'Method "\\%s::%s()" not found!', $ref->getName(), $method ) );
+			$ref->getMethod( $method )->invokeArgs( $cls, $args );
+
 		} catch( ERedirect $e ) {
 			$e();
 		} catch( EClientError $e ) {
 			$args = [ $e->getCode(), $e->getMessage() ];
-			if ( OPT_DEBUG ) header( sprintf( 'V-Trace: \\%s::__onerror(%s)', $ref->getName(), implode( ', ', $args ) ), false );
 			$ref->getMethod( '__onerror' )->invokeArgs( $cls, $args );
 		} catch( Exception $e ) {
 			http_response_code( 500 );

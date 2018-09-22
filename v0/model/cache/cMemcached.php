@@ -1,6 +1,6 @@
 <?php namespace model\cache;
 
-class cMemcached implements \ArrayAccess {
+class cMemcached implements iCacher {
 
 	protected $pt = [];
 	protected $sv = null;
@@ -26,32 +26,23 @@ class cMemcached implements \ArrayAccess {
 		}
 	}
 
-	public function __destruct() {
-		foreach( $this->pt as $k => $v ) {
-			$this->sv->set( $k, $v );
-		}
-	}
+
 
 	// interface methods
-	public function offsetExists( $offset ) {
-		return isset( $this->pt[$offset] ) || ( $this->sv->get( $offset ) !== false );
-	}
-
-	public function &offsetGet( $offset ) {
-		if ( empty( $this->pt[$offset] ) ) {
-			$this->pt[$offset] = $this->sv->get( $offset );
+	public function get( string $key, callable $callback, array $args = [], $version = null ) {
+		$fff = $this->sv->get( APP_HASH . $key );
+//		$ver = $this->sv->get( APP_HASH . $key . 'v' );
+		if ( $fff === false ) {
+			$fff = call_user_func_array( $callback, $args );
+			$this->set( $key, $fff );
 		}
-		return $this->pt[$offset];
+		return $fff;
 	}
 
-	public function offsetSet( $offset, $value ) {
-		unset( $this->pt[$offset] );
-		$this->sv->set( $offset, $value );
+	public function set( string $key, $value, $version = null ) {
+		$this->sv->set( APP_HASH . $key, $value );
+		if ( $version !== null ) {
+			$this->sv->set( APP_HASH . $key. 'v', $version );
+		}
 	}
-
-	public function offsetUnset( $offset ) {
-		unset( $this->pt[$offset] );
-		$this->sv->delete( $offset );
-	}
-
 }
