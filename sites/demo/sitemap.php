@@ -2,13 +2,15 @@
 
 // [action][@method][/arg1][/arg2]...[/argN]
 
-return [
-
-	1 => [ 0, 'root', null, '*' ], // 0000root.php
-	2 => [ 1, 'warehouse', null, '*' ],
-	3 => [ 2, 'checkin', 'checkin', '*' ],
-	4 => [ 2, 'checkout', 'checkout', '*' ],
-	5 => [ 1, 'store', 'store', '*' ],
-	6 => [ 5, 'admin', 'admin', '*' ],
-
-];
+return [ '', null, [
+	[ 'mercury', 'class_mercury' ],
+	[ 'venus', 'class_venus@overview' ],
+	[ 'earth', 'class_earth', [
+		[ 'countries', 'class_countries', [
+			[ '*/flag', '@flag/small' ],
+			[ '*/leader', '' ],
+			[ 'list', '@list' ],
+		]],
+	]],
+	[ 'mars', 'class_mars/missions' ],
+]];
